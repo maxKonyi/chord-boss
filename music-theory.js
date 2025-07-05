@@ -595,7 +595,9 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
   }
   
   // Support optional 5th logic (for seventh chords and larger)
-  const optionalFifthFlag = expectedChord.optionalFifth === true;
+  // Optional 5th applies only to chords with a 7th or higher (not 6th chords)
+  const isPlainSixth = expectedChord.type && expectedChord.type.includes('6') && expectedChord.midiNotes && expectedChord.midiNotes.length === 4;
+  const optionalFifthFlag = expectedChord.optionalFifth === true && !isPlainSixth;
   let rootPc = null;
   if (optionalFifthFlag && expectedChord.root) {
     // Helper to convert note name to pitch class
