@@ -21,7 +21,8 @@ function ChordTrainer({ activeNotes }) {
     rootNotes: [],
     octave: 4,
     timerMaxSeconds: 10, // Maximum time for timer bar
-    questionCount: 10 // Number of questions per session
+    questionCount: 10, // Number of questions per session
+    questionDelay: 1500 // Delay between questions in milliseconds (default 1.5 seconds)
   });
   
   // Reference to track active notes
@@ -59,10 +60,10 @@ function ChordTrainer({ activeNotes }) {
       return;
     }
     
-    // Generate next question after a short delay
+    // Generate next question after the configured delay
     setTimeout(() => {
       generateNewQuestion();
-    }, 1000);
+    }, settings.questionDelay);
   };
   
   // Generate a new chord question
@@ -190,14 +191,14 @@ function ChordTrainer({ activeNotes }) {
               type: 'complete',
               message: `Training complete! Final score: ${score + pointsEarned}`
             });
-          }, 1500);
+          }, settings.questionDelay);
           return;
         }
         
-        // Generate next question after a short delay
+        // Generate next question after the configured delay
         setTimeout(() => {
           generateNewQuestion();
-        }, 1500);
+        }, settings.questionDelay);
       }
     }
   }, [activeNotes, currentChord, isRunning, elapsedTime, generateNewQuestion]);
@@ -394,6 +395,25 @@ function ChordTrainer({ activeNotes }) {
                 <option value="20">20 seconds</option>
               </select>
             </label>
+          </div>
+          
+          <div style={{ marginTop: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+              Question Delay: {(settings.questionDelay / 1000).toFixed(1)}s
+            </label>
+            <input 
+              type="range" 
+              min="0" 
+              max="3000" 
+              step="100"
+              value={settings.questionDelay}
+              onChange={e => setSettings({...settings, questionDelay: parseInt(e.target.value)})}
+              style={{ width: '100%', background: '#222', height: '8px', borderRadius: '4px', appearance: 'none', outline: 'none' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#888', marginTop: '0.25rem' }}>
+              <span>Instant</span>
+              <span>3 seconds</span>
+            </div>
           </div>
         </div>
       </div>
