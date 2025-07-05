@@ -699,11 +699,11 @@ function ChordTrainer({ activeNotes }) {
               <label className="select-all-switch" onClick={e => e.stopPropagation()}>
                 <input 
                   type="checkbox" 
-                  checked={['dominant9', 'major9', 'minor9'].every(type => 
+                  checked={['dominant9', 'major9', 'minor9', '6(9)', 'm6(9)'].every(type => 
                     settings.chordTypes.includes(type)
                   )}
                   onChange={e => {
-                    const ninthTypes = ['dominant9', 'major9', 'minor9', 'minorMajor9'];
+                    const ninthTypes = ['dominant9', 'major9', 'minor9', 'minorMajor9', '6(9)', 'm6(9)'];
                     let newTypes = [...settings.chordTypes];
                     
                     if (e.target.checked) {
@@ -791,6 +791,38 @@ function ChordTrainer({ activeNotes }) {
                   title="Root, Minor 3rd, Perfect 5th, Major 7th, Major 9th"
                 >
                   m(maj9)
+                </button>
+                {/* 6(9) */}
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('6(9)') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('6(9)')) {
+                      newTypes.splice(newTypes.indexOf('6(9)'),1);
+                    } else {
+                      newTypes.push('6(9)');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Major 6 add 9"
+                >
+                  6(9)
+                </button>
+                {/* m6(9) */}
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('m6(9)') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('m6(9)')) {
+                      newTypes.splice(newTypes.indexOf('m6(9)'),1);
+                    } else {
+                      newTypes.push('m6(9)');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Minor 6 add 9"
+                >
+                  m6(9)
                 </button>
               </div>
             </div>

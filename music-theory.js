@@ -216,6 +216,17 @@ MusicTheory.CHORD_TYPES = {
   },
   
   // 9th Chords
+  '6(9)': {
+    intervals: [0, 4, 7, 9, 14],
+    suffix: '6(9)',
+    displayName: '6(9)'
+  },
+  'm6(9)': {
+    intervals: [0, 3, 7, 9, 14],
+    suffix: 'm6(9)',
+    displayName: 'm6(9)'
+  },
+  
   dominant9: {
     intervals: [0, 4, 7, 10, 14],
     suffix: '9',
