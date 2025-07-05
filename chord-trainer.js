@@ -828,7 +828,7 @@ function ChordTrainer({ activeNotes }) {
         </div>
         
         <div className="settings-group">
-          <h4>Inversions</h4>
+          <h4>Options</h4>
           <div>
             <label>
               <input 
@@ -839,12 +839,7 @@ function ChordTrainer({ activeNotes }) {
               Include Inversions
             </label>
           </div>
-        </div>
-
-        {/* Optional 5th Toggle */}
-        <div className="settings-group">
-          <h4>5th Optional (7th chords+)</h4>
-          <div>
+          <div style={{ marginTop: '0.5rem' }}>
             <label>
               <input
                 type="checkbox"
