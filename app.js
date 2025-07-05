@@ -35,10 +35,8 @@ function App() {
           });
           setMidiInputs(inputs);
           
-          // Select first input if available
-          if (inputs.length > 0) {
-            setSelectedInput(inputs[0]);
-          }
+          // Set to "All inputs" by default (null means listen to all inputs)
+          setSelectedInput(null);
         })
         .catch(err => {
           console.error('MIDI Access denied!', err);
@@ -51,8 +49,6 @@ function App() {
   
   // Set up MIDI input listeners when selected input changes
   useEffect(() => {
-    if (!selectedInput) return;
-    
     const handleMIDIMessage = (message) => {
       const command = message.data[0];
       const note = message.data[1];
@@ -76,18 +72,43 @@ function App() {
       }
     };
     
-    selectedInput.onmidimessage = handleMIDIMessage;
-    
-    return () => {
-      selectedInput.onmidimessage = null;
-    };
-  }, [selectedInput]);
+    // If selectedInput is null, listen to all inputs
+    if (selectedInput === null && midiAccess) {
+      // Set up listeners for all inputs
+      const inputListeners = new Map();
+      
+      midiAccess.inputs.forEach(input => {
+        input.onmidimessage = handleMIDIMessage;
+        inputListeners.set(input.id, input);
+      });
+      
+      // Clean up function to remove all listeners
+      return () => {
+        inputListeners.forEach(input => {
+          input.onmidimessage = null;
+        });
+      };
+    } 
+    // Otherwise listen to just the selected input
+    else if (selectedInput) {
+      selectedInput.onmidimessage = handleMIDIMessage;
+      
+      return () => {
+        selectedInput.onmidimessage = null;
+      };
+    }
+  }, [selectedInput, midiAccess]);
   
   // Handle input device selection
   const handleInputChange = (e) => {
     const selectedId = e.target.value;
-    const input = midiInputs.find(input => input.id === selectedId);
-    setSelectedInput(input);
+    // If "all" is selected, set to null to listen to all inputs
+    if (selectedId === "all") {
+      setSelectedInput(null);
+    } else {
+      const input = midiInputs.find(input => input.id === selectedId);
+      setSelectedInput(input);
+    }
   };
 
   const renderContent = () => {
@@ -202,10 +223,11 @@ function MidiStatus({ midiAccess, midiError, midiInputs, selectedInput, handleIn
       <label>
         MIDI Input: 
         <select 
-          value={selectedInput ? selectedInput.id : ''} 
+          value={selectedInput ? selectedInput.id : 'all'} 
           onChange={handleInputChange}
           style={{ marginLeft: '0.5rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
         >
+          <option value="all">All inputs</option>
           {midiInputs.map(input => (
             <option key={input.id} value={input.id}>
               {input.name || input.manufacturer || 'Unknown Device'}
