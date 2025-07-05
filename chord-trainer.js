@@ -102,7 +102,9 @@ function ChordTrainer({ activeNotes }) {
     
     // Check if the current chord is played correctly
     if (currentChord && isRunning && activeNotes.size >= currentChord.midiNotes.length) {
-      const isCorrect = MusicTheory.validateChord(currentChord, activeNotes);
+      // Convert activeNotes Set to an array of MIDI note numbers
+      const playedNotesArray = Array.from(activeNotes);
+      const isCorrect = MusicTheory.validateChord(playedNotesArray, currentChord);
       
       if (isCorrect) {
         // Stop timer

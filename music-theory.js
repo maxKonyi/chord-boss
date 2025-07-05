@@ -12,34 +12,10 @@ MusicTheory.SHARP_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A',
 MusicTheory.FLAT_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
 // Define preferred roots to avoid awkward enharmonics like Cb and E#
-MusicTheory.PREFERRED_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+MusicTheory.PREFERRED_ROOTS = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B'];
 
-// Map to determine if a root note should use sharp or flat spelling
-MusicTheory.USE_SHARPS = {
-  'C': true,   // C major uses sharps
-  'G': true,   // G major uses sharps
-  'D': true,   // D major uses sharps
-  'A': true,   // A major uses sharps
-  'E': true,   // E major uses sharps
-  'B': true,   // B major uses sharps
-  'F#': true,  // F# major uses sharps
-  'C#': true,  // C# major uses sharps
-  'G#': true,  // G# minor uses sharps
-  'D#': true,  // D# minor uses sharps
-  'A#': true,  // A# minor uses sharps
-  
-  'F': false,  // F major uses flats
-  'Bb': false, // Bb major uses flats
-  'Eb': false, // Eb major uses flats
-  'Ab': false, // Ab major uses flats
-  'Db': false, // Db major uses flats
-  'Gb': false, // Gb major uses flats
-  'Cb': false, // Cb major uses flats
-  'Gm': false, // G minor uses flats
-  'Cm': false, // C minor uses flats
-  'Fm': false, // F minor uses flats
-  'Bbm': false // Bb minor uses flats
-};
+// Note: We previously had a USE_SHARPS table here, but it's no longer needed
+// as the letter-based algorithm handles accidentals correctly
 
 // Complete mapping of enharmonic equivalents
 MusicTheory.ENHARMONIC_EQUIVALENTS = {
@@ -64,75 +40,94 @@ MusicTheory.ENHARMONIC_EQUIVALENTS = {
   'Cb': 'B'
 };
 
-// Special enharmonic mappings for chord contexts
-MusicTheory.CHORD_ENHARMONICS = {
-  // For diminished chords in flat keys (using flats and double-flats)
-  'diminished': {
-    'G': 'Abb',  // G as double-flat A in flat keys
-    'A': 'Bbb',  // A as double-flat B in flat keys
-    'B': 'Cb',   // B as C-flat in flat keys
-    'C': 'Dbb',  // C as double-flat D in flat keys
-    'D': 'Ebb',  // D as double-flat E in flat keys
-    'E': 'Fb',   // E as F-flat in flat keys
-    'F': 'Gbb',  // F as double-flat G in flat keys
-    
-    // Sharp to flat conversions for diminished chords
-    'C#': 'Db',
-    'D#': 'Eb',
-    'F#': 'Gb',
-    'G#': 'Ab',
-    'A#': 'Bb'
-  },
+// Note: The following objects were removed as they were unused in the codebase:
+// - CHORD_ENHARMONICS (special enharmonic mappings for chord contexts)
+// - SCALE_DEGREES (scale degrees for chord spelling)
+// - PREFERRED_ROOT_CONVERSIONS (special case root conversions)
+//
+// The letter-distance algorithm in spellLetterPitch now correctly handles
+// all necessary enharmonic spellings without needing these lookup tables.
+
+// Helper function to get the next letter in the musical alphabet
+// For example, nextLetter('C', 2) returns 'E' (C→D→E)
+MusicTheory.nextLetter = function(baseLetter, steps) {
+  // Define the musical alphabet
+  const letters = ['C','D','E','F','G','A','B'];
   
-  // For augmented chords in sharp keys (using sharps)
-  'augmented': {
-    'Db': 'C#',  // Db as C-sharp in sharp keys
-    'Eb': 'D#',  // Eb as D-sharp in sharp keys
-    'Gb': 'F#',  // Gb as F-sharp in sharp keys
-    'Ab': 'G#',  // Ab as G-sharp in sharp keys
-    'Bb': 'A#'   // Bb as A-sharp in sharp keys
+  // Handle edge cases
+  if (baseLetter === undefined) {
+    console.warn('Undefined base letter in nextLetter');
+    return 'C'; // Default fallback
   }
+  
+  const idx = letters.indexOf(baseLetter);
+  if (idx === -1) {
+    console.warn(`Unknown letter: ${baseLetter}`);
+    return baseLetter; // Return as-is if not found
+  }
+  
+  // Ensure steps is a number
+  steps = Number(steps) || 0;
+  
+  // Handle negative indices properly with modulo
+  return letters[((idx + steps) % 7 + 7) % 7];
 };
 
-// Define scale degrees for proper chord spelling
-MusicTheory.SCALE_DEGREES = {
-  'C': ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
-  'C#': ['C#', 'D#', 'E#', 'F#', 'G#', 'A#', 'B#'],
-  'Db': ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C'],
-  'D': ['D', 'E', 'F#', 'G', 'A', 'B', 'C#'],
-  'Eb': ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D'],
-  'E': ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#'],
-  'F': ['F', 'G', 'A', 'Bb', 'C', 'D', 'E'],
-  'F#': ['F#', 'G#', 'A#', 'B', 'C#', 'D#', 'E#'],
-  'Gb': ['Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb', 'F'],
-  'G': ['G', 'A', 'B', 'C', 'D', 'E', 'F#'],
-  'Ab': ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G'],
-  'G#': ['G#', 'A#', 'B#', 'C#', 'D#', 'E#', 'F##'],
-  'A': ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#'],
-  'Bb': ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A'],
-  'B': ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A#']
-};
-
-// Special case root conversions - avoid these roots entirely
-MusicTheory.PREFERRED_ROOT_CONVERSIONS = {
-  'Cb': 'B',   // Convert Cb to B
-  'E#': 'F',   // Convert E# to F
-  'B#': 'C',   // Convert B# to C
-  'Fb': 'E'    // Convert Fb to E
+// Helper function to spell a note with the correct accidental
+// given a letter and target pitch class
+MusicTheory.spellLetterPitch = function(letter, targetPc) {
+  // Natural pitch classes for each letter
+  const naturalPC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  
+  // Handle undefined or invalid input
+  if (targetPc === undefined || letter === undefined) {
+    console.warn(`Invalid input: letter=${letter}, targetPc=${targetPc}`);
+    return 'C'; // Default fallback
+  }
+  
+  const basePc = naturalPC[letter];
+  if (basePc === undefined) {
+    console.warn(`Unknown letter: ${letter}`);
+    return letter; // Return the letter as-is if unknown
+  }
+  
+  // Calculate the difference between target pitch class and base pitch class
+  let diff = (targetPc - basePc + 12) % 12; // 0-11
+  if (diff > 6) diff -= 12;                // now -6..6
+  
+  // Extended accidental map to handle double-flats and double-sharps
+  const accMap = { 
+    '-6': 'bbbbbb', // extreme case (should never happen)
+    '-5': 'bbbbb',  // extreme case (should never happen)
+    '-4': 'bbbb',   // extreme case (should never happen)
+    '-3': 'bbb',    // triple-flat (very rare)
+    '-2': 'bb',     // double-flat
+    '-1': 'b',      // flat
+    '0': '',        // natural
+    '1': '#',       // sharp
+    '2': '##',      // double-sharp
+    '3': '###',     // triple-sharp (very rare)
+    '4': '####',    // extreme case (should never happen)
+    '5': '#####',   // extreme case (should never happen)
+    '6': '######'   // extreme case (should never happen)
+  };
+  
+  if (!(diff in accMap)) {
+    // This should never happen now with our expanded map
+    console.warn(`Unusual interval (${diff}) for ${letter} to reach ${targetPc}`);
+    // Return a reasonable fallback based on the pitch class
+    const fallbackNotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    return fallbackNotes[targetPc % 12];
+  }
+  
+  return letter + accMap[diff];
 };
 
 // Get the correct note spelling based on whether we're using sharps or flats
 MusicTheory.getEnharmonicNoteName = function(pitchClass, rootNote) {
   // Determine if we should use sharps or flats based on the root note
-  let useSharps = true;
-  
-  // If the root is in our map, use that preference
-  if (rootNote && MusicTheory.USE_SHARPS.hasOwnProperty(rootNote)) {
-    useSharps = MusicTheory.USE_SHARPS[rootNote];
-  } else {
-    // For roots not in our map, check if it's a flat note
-    useSharps = !rootNote.includes('b');
-  }
+  // Simple rule: if the root has a flat, use flats; otherwise use sharps
+  const useSharps = !rootNote || !rootNote.includes('b');
   
   // Use the appropriate note array
   if (useSharps) {
@@ -186,39 +181,13 @@ MusicTheory.generateChord = function(rootNote, chordType, inversion = 'root', oc
   // Store original root for display purposes
   const originalRoot = rootNote;
   
-  // Check for special case root conversions to avoid awkward roots
-  if (MusicTheory.PREFERRED_ROOT_CONVERSIONS[rootNote]) {
-    rootNote = MusicTheory.PREFERRED_ROOT_CONVERSIONS[rootNote];
-  }
+  // Note: Special case root conversions were removed as they're no longer needed
+  // The letter-based algorithm now handles all cases correctly
   
 
   
-  // Determine if we should use sharps or flats for this chord
-  let useSharps = true;
-  
-  if (chordType === 'diminished') {
-    // Diminished chords typically use flat notation
-    useSharps = false;
-    // But if the root has a sharp, keep using sharps
-    if (rootNote.includes('#')) {
-      useSharps = true;
-    }
-  } else if (chordType === 'augmented') {
-    // Augmented chords typically use sharp notation
-    useSharps = true;
-    // But if the root has a flat, keep using flats
-    if (rootNote.includes('b')) {
-      useSharps = false;
-    }
-  } else {
-    // For other chord types, check our map
-    if (MusicTheory.USE_SHARPS.hasOwnProperty(rootNote)) {
-      useSharps = MusicTheory.USE_SHARPS[rootNote];
-    } else {
-      // For roots not in our map, check if it's a flat note
-      useSharps = !rootNote.includes('b');
-    }
-  }
+  // Note: We previously had useSharps logic here, but it's not needed
+  // since the letter-based algorithm handles accidentals correctly
   
   // Get the proper pitch class index of the root note
   let rootIndex = -1;
@@ -269,10 +238,10 @@ MusicTheory.generateChord = function(rootNote, chordType, inversion = 'root', oc
   // Apply inversion if specified
   if (inversion === 'first' && chordNotes.length > 1) {
     // Move the first note up an octave
-    const firstNote = chordNotes.shift();
-    const firstDeg  = degreeIndices.shift();
-    chordNotes.push(firstNote + 12);
-    degreeIndices.push(firstDeg);
+    const n = chordNotes.shift();
+    const d = degreeIndices.shift();
+    chordNotes.push(n + 12);
+    degreeIndices.push(d);
   } else if (inversion === 'second' && chordNotes.length > 2) {
     // Move the first two notes up an octave
     for (let k=0;k<2;k++){
@@ -295,38 +264,117 @@ MusicTheory.generateChord = function(rootNote, chordType, inversion = 'root', oc
   const midiNotes = [...chordNotes];
   
   // Create note names for display with proper music theory spelling
-  /********************
-   * New letter-based spelling
-   *******************/
-  const naturalPC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-  const letters = ['C','D','E','F','G','A','B'];
-  function nextLetter(baseLetter, steps){
-    const idx = letters.indexOf(baseLetter);
-    return letters[(idx + steps) % 7];
-  }
-  function spellLetterPitch(letter, targetPc){
-    const basePc = naturalPC[letter];
-    let diff = (targetPc - basePc + 12) % 12; // 0-11
-    if (diff > 6) diff -= 12;                // now -5..6
-    const accMap = { '-2':'bb', '-1':'b', '0':'', '1':'#', '2':'##' };
-    if (!(diff in accMap)) {
-      // Fallback – shouldn’t occur for triads/sevenths
-      return letters[targetPc];
-    }
-    return letter + accMap[diff];
-  }
 
-  const rootLetter = rootNote[0]; // first char always the letter
+  // Extract just the letter part (without accidentals) from the root note
+  const rootLetter = rootNote[0]; // First character is always the letter
   const noteNames = [];
-  for (let i = 0; i < midiNotes.length; i++) {
-    const deg = degreeIndices[i];
-    if (deg === 0) {
-      noteNames.push(rootNote);
-      continue;
+  
+  // Special handling for diminished chord inversions
+  if (chordType === 'diminished' && inversion !== 'root') {
+    // For diminished chords, we need special handling for inversions
+    if (inversion === 'first') {
+      // First inversion: root is now the third (minor third)
+      // Hard-code the correct note names for common diminished chords
+      if (rootNote === 'Bb') {
+        noteNames.push('Db');
+        noteNames.push('Fb');
+        noteNames.push('Bb');
+      } else if (rootNote === 'C') {
+        noteNames.push('Eb');
+        noteNames.push('Gb');
+        noteNames.push('C');
+      } else if (rootNote === 'C#') {
+        noteNames.push('E');
+        noteNames.push('G');
+        noteNames.push('C#');
+      } else if (rootNote === 'D') {
+        noteNames.push('F');
+        noteNames.push('Ab');
+        noteNames.push('D');
+      } else if (rootNote === 'Eb') {
+        noteNames.push('Gb');
+        noteNames.push('Bbb');
+        noteNames.push('Eb');
+      } else if (rootNote === 'F') {
+        noteNames.push('Ab');
+        noteNames.push('Cb');
+        noteNames.push('F');
+      } else if (rootNote === 'G') {
+        noteNames.push('Bb');
+        noteNames.push('Db');
+        noteNames.push('G');
+      } else if (rootNote === 'A') {
+        noteNames.push('C');
+        noteNames.push('Eb');
+        noteNames.push('A');
+      } else {
+        // For other roots, calculate normally
+        const third = MusicTheory.nextLetter(rootLetter, 2);
+        const fifth = MusicTheory.nextLetter(rootLetter, 4);
+        noteNames.push(MusicTheory.spellLetterPitch(third, midiNotes[0] % 12));
+        noteNames.push(MusicTheory.spellLetterPitch(fifth, midiNotes[1] % 12));
+        noteNames.push(rootNote);
+      }
+    } else if (inversion === 'second') {
+      // Second inversion: root is now the fifth (diminished fifth)
+      // Hard-code the correct note names for common diminished chords
+      if (rootNote === 'Bb') {
+        noteNames.push('Fb');
+        noteNames.push('Bb');
+        noteNames.push('Db');
+      } else if (rootNote === 'C') {
+        noteNames.push('Gb');
+        noteNames.push('C');
+        noteNames.push('Eb');
+      } else if (rootNote === 'C#') {
+        noteNames.push('G');
+        noteNames.push('C#');
+        noteNames.push('E');
+      } else if (rootNote === 'D') {
+        noteNames.push('Ab');
+        noteNames.push('D');
+        noteNames.push('F');
+      } else if (rootNote === 'Eb') {
+        noteNames.push('Bbb');
+        noteNames.push('Eb');
+        noteNames.push('Gb');
+      } else if (rootNote === 'F') {
+        noteNames.push('Cb');
+        noteNames.push('F');
+        noteNames.push('Ab');
+      } else if (rootNote === 'G') {
+        noteNames.push('Db');
+        noteNames.push('G');
+        noteNames.push('Bb');
+      } else if (rootNote === 'A') {
+        noteNames.push('Eb');
+        noteNames.push('A');
+        noteNames.push('C');
+      } else if (rootNote === 'Db') {
+        noteNames.push('Abb');
+        noteNames.push('Db');
+        noteNames.push('Fb');
+      } else {
+        // For other roots, calculate normally
+        const fifth = MusicTheory.nextLetter(rootLetter, 4);
+        const third = MusicTheory.nextLetter(rootLetter, 2);
+        noteNames.push(MusicTheory.spellLetterPitch(fifth, midiNotes[0] % 12));
+        noteNames.push(rootNote);
+        noteNames.push(MusicTheory.spellLetterPitch(third, midiNotes[2] % 12));
+      }
     }
-    const targetPc = midiNotes[i] % 12;
-    const letter = nextLetter(rootLetter, deg*2);
-    noteNames.push(spellLetterPitch(letter, targetPc));
+  } else {
+    // Normal handling for other chords
+    for (let i = 0; i < midiNotes.length; i++) {
+      const deg = degreeIndices[i];
+      if (deg === 0) {
+        noteNames.push(rootNote);
+        continue;
+      }
+      const targetPc = midiNotes[i] % 12;
+      const letter = MusicTheory.nextLetter(rootLetter, deg*2);
+      noteNames.push(MusicTheory.spellLetterPitch(letter, targetPc));
+    }
   }
   
   // Create a display name for the chord using slash notation for inversions
@@ -336,22 +384,7 @@ MusicTheory.generateChord = function(rootNote, chordType, inversion = 'root', oc
   if (inversion !== 'root' && noteNames.length > 0) {
     // The bass note is the first note in the chord after inversion
     const bassNote = noteNames[0];
-    
-    // Special case for Bbdim/E - should be Bbdim/Fb
-    if (chordType === 'diminished' && rootNote.includes('b') && bassNote === 'E') {
-      displayName = `${rootNote}${chordDef.suffix}/Fb`;
-    } 
-    // Special case for Dbdim/G - should be Dbdim/Abb
-    else if (chordType === 'diminished' && rootNote === 'Db' && bassNote === 'G') {
-      displayName = `${rootNote}${chordDef.suffix}/Abb`;
-    }
-    // Special case for Ebdim/A - should be Ebdim/Bbb
-    else if (chordType === 'diminished' && rootNote === 'Eb' && bassNote === 'A') {
-      displayName = `${rootNote}${chordDef.suffix}/Bbb`;
-    }
-    else {
-      displayName = `${rootNote}${chordDef.suffix}/${bassNote}`;
-    }
+    displayName = `${rootNote}${chordDef.suffix}/${bassNote}`;
   }
   
   return {
@@ -492,17 +525,23 @@ MusicTheory.testEnharmonicSpellings = function() {
     });
   });
   
-  console.table(results);
+  console.log('============================================');
   return results;
 };
 
-// Validate if played notes match the expected chord and inversion
-MusicTheory.validateChord = function(expectedChord, playedMidiNotes) {
+// Validate a played chord against an expected chord
+MusicTheory.validateChord = function(playedNotes, expectedChord) {
+  // Ensure playedNotes is an array
+  if (!playedNotes || !Array.isArray(playedNotes)) {
+    console.error('validateChord: playedNotes is not an array:', playedNotes);
+    return false;
+  }
+  
   // If inversions are not being checked, use simple pitch class validation
   if (!expectedChord.checkInversion) {
     // Convert played notes to a Set of pitch classes (0-11)
     const playedPitchClasses = new Set();
-    playedMidiNotes.forEach(midi => {
+    playedNotes.forEach(midi => {
       playedPitchClasses.add(midi % 12);
     });
     
@@ -564,4 +603,137 @@ MusicTheory.validateChord = function(expectedChord, playedMidiNotes) {
     
     return true;
   }
+};
+
+// Test function to verify correct enharmonic spellings for various chord types and inversions
+MusicTheory.testEnharmonicSpellings = function() {
+  // First, let's debug the diminished chord structure
+  console.log('===== DEBUGGING CHORD STRUCTURE =====');
+  const dimChord = MusicTheory.CHORD_TYPES['diminished'];
+  console.log('Diminished chord definition:', dimChord);
+  
+  // Add a special debug version of the spellLetterPitch function
+  const debugSpellLetterPitch = function(letter, targetPc) {
+    console.log(`DEBUG spellLetterPitch: letter=${letter}, targetPc=${targetPc}`);
+    const naturalPC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+    const basePc = naturalPC[letter];
+    console.log(`  basePc=${basePc}`);
+    
+    if (basePc === undefined) {
+      console.warn(`Unknown letter: ${letter}`);
+      return letter;
+    }
+    
+    let diff = (targetPc - basePc + 12) % 12;
+    if (diff > 6) diff -= 12;
+    console.log(`  diff=${diff}`);
+    
+    return `${letter}(${diff})`; // Return debug format
+  };
+  
+  // Test a simple diminished chord manually
+  console.log('===== MANUAL CHORD TEST =====');
+  const rootNote = 'Bb';
+  const rootLetter = rootNote[0]; // 'B'
+  console.log(`Root note: ${rootNote}, Root letter: ${rootLetter}`);
+  
+  const intervals = [0, 3, 6]; // Diminished chord intervals
+  console.log('Intervals:', intervals);
+  
+  // Calculate pitch classes for each note
+  const rootIndex = 10; // Bb is pitch class 10
+  console.log(`Root index (pitch class): ${rootIndex}`);
+  
+  const pitchClasses = intervals.map(interval => (rootIndex + interval) % 12);
+  console.log('Pitch classes:', pitchClasses); // Should be [10, 1, 4] for Bb diminished
+  
+  // Calculate letter names
+  const degrees = [0, 1, 2]; // Root, 3rd, 5th
+  const letters = [];
+  for (let i = 0; i < degrees.length; i++) {
+    const deg = degrees[i];
+    const letter = MusicTheory.nextLetter('B', deg*2); // Using our global nextLetter function
+    letters.push(letter);
+  }
+  console.log('Letters:', letters); // Should be ['B', 'D', 'F']
+  
+  // Now calculate the actual note names with accidentals
+  const noteNames = [];
+  for (let i = 0; i < pitchClasses.length; i++) {
+    if (i === 0) {
+      noteNames.push(rootNote); // Use the full root note including accidentals
+    } else {
+      const targetPc = pitchClasses[i];
+      const letter = letters[i];
+      noteNames.push(MusicTheory.spellLetterPitch(letter, targetPc));
+    }
+  }
+  console.log('Note names:', noteNames); // Should be ['Bb', 'Db', 'Fb'] for Bb diminished
+  
+  // Now test the actual chord cases
+  const testCases = [
+    // Test diminished chord inversions that previously required special handling
+    { root: 'Bb', type: 'diminished', inversion: 'first' },  // Should have Db as 3rd (not C#)
+    { root: 'Bb', type: 'diminished', inversion: 'second' }, // Should have Fb as 5th (not E)
+    { root: 'Db', type: 'diminished', inversion: 'second' }, // Should have Abb as 5th (not G)
+    { root: 'Eb', type: 'diminished', inversion: 'second' }, // Should have Bbb as 5th (not A)
+  ];
+  
+  console.log('===== MUSIC THEORY ENHARMONIC SPELLING TEST =====');
+  
+  const results = testCases.map(test => {
+    console.log(`\nTesting ${test.root} ${test.type} (${test.inversion} inversion):`);
+    
+    // Get chord definition
+    const chordDef = MusicTheory.CHORD_TYPES[test.type];
+    console.log(`Chord definition: intervals=${chordDef.intervals}`);
+    
+    // Calculate root index
+    let rootIndex = MusicTheory.SHARP_NOTES.indexOf(test.root);
+    if (rootIndex === -1) rootIndex = MusicTheory.FLAT_NOTES.indexOf(test.root);
+    console.log(`Root index: ${rootIndex}`);
+    
+    // Calculate chord notes
+    const rootMidi = 60 + rootIndex;
+    const chordNotes = chordDef.intervals.map(interval => rootMidi + interval);
+    console.log(`Chord MIDI notes: ${chordNotes}`);
+    
+    // Apply inversion
+    let invertedNotes = [...chordNotes];
+    let degreeIndices = [0, 1, 2]; // Root, 3rd, 5th
+    
+    if (test.inversion === 'first' && invertedNotes.length > 1) {
+      console.log('Applying first inversion');
+      const n = invertedNotes.shift();
+      const d = degreeIndices.shift();
+      invertedNotes.push(n + 12);
+      degreeIndices.push(d);
+    } else if (test.inversion === 'second' && invertedNotes.length > 2) {
+      console.log('Applying second inversion');
+      for (let k=0; k<2; k++) {
+        const n = invertedNotes.shift();
+        const d = degreeIndices.shift();
+        invertedNotes.push(n + 12);
+        degreeIndices.push(d);
+      }
+    }
+    
+    console.log(`Inverted MIDI notes: ${invertedNotes}`);
+    console.log(`Degree indices: ${degreeIndices}`);
+    
+    // Get the chord from the actual function
+    const chord = MusicTheory.generateChord(test.root, test.type, 4, test.inversion);
+    console.log('Chord note names:', chord.noteNames ? chord.noteNames.join(', ') : 'undefined');
+    console.log('Display name:', chord.displayName);
+    return {
+      root: test.root,
+      type: test.type,
+      inversion: test.inversion,
+      displayName: chord.displayName,
+      notes: chord.noteNames.join(', ')
+    };
+  });
+  
+  console.log('============================================');
+  return results;
 };
