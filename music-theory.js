@@ -568,7 +568,7 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     // and check if it matches the expected bass note for this inversion
     
     // Find the lowest played note
-    const lowestPlayedNote = Math.min(...Array.from(playedMidiNotes));
+    const lowestPlayedNote = Math.min(...playedNotes);
     const lowestPlayedPitchClass = lowestPlayedNote % 12;
     
     // Get the expected bass note for this inversion
@@ -582,7 +582,7 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     
     // Then check if all the right notes are played (ignoring octaves)
     const playedPitchClasses = new Set();
-    playedMidiNotes.forEach(midi => {
+    playedNotes.forEach(midi => {
       playedPitchClasses.add(midi % 12);
     });
     
