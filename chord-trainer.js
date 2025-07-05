@@ -30,6 +30,30 @@ function ChordTrainer({ activeNotes }) {
   // Timer interval reference
   const timerRef = useRef(null);
   
+  // Skip the current question and move to the next one
+  const skipQuestion = () => {
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Update question count but don't add points
+    setQuestionCount(prevCount => prevCount + 1);
+    setIsRunning(false);
+    
+    // Show feedback
+    setFeedback({
+      type: 'skipped',
+      message: 'Question skipped'
+    });
+    
+    // Generate next question after a short delay
+    setTimeout(() => {
+      generateNewQuestion();
+    }, 1000);
+  };
+  
   // Generate a new chord question
   const generateNewQuestion = useCallback(() => {
     if (questionCount >= settings.questionCount) {
@@ -192,11 +216,17 @@ function ChordTrainer({ activeNotes }) {
               <div className="score-label">Time</div>
             </div>
           </div>
+          
+          {isRunning && (
+            <div className="controls" style={{ marginTop: '1rem' }}>
+              <button onClick={skipQuestion} className="skip-button">Skip</button>
+            </div>
+          )}
         </>
       )}
       
       {feedback && (
-        <div className={`result-feedback ${feedback.type === 'correct' ? 'result-correct' : 'result-incorrect'}`}>
+        <div className={`result-feedback ${feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : 'result-incorrect'}`}>
           {feedback.message}
           {feedback.type === 'complete' && (
             <div className="controls" style={{ marginTop: '1rem' }}>
