@@ -263,3 +263,56 @@
   color: white;
   border-color: #1976d2;
 }
+
+/* Active chord types summary */
+.active-chord-types {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #222;
+  border-radius: 4px;
+}
+
+.chord-type-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chord-type-pill {
+  background-color: #1e88e5;
+  color: white;
+  border: 1px solid #1976d2;
+  border-radius: 1rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  display: inline-block;
+}
+
+.no-chords-selected {
+  color: #888;
+  font-style: italic;
+}
+
+.clear-all-btn {
+  background-color: #444;
+  color: #ddd;
+  border: none;
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: auto;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.clear-all-btn:hover {
+  background-color: #555;
+}
