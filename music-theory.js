@@ -160,6 +160,16 @@ MusicTheory.CHORD_TYPES = {
     suffix: '+', // Augmented plus symbol
     displayName: 'Aug'
   },
+  sus2: {
+    intervals: [0, 2, 7],
+    suffix: 'sus2',
+    displayName: 'Sus2'
+  },
+  sus4: {
+    intervals: [0, 5, 7],
+    suffix: 'sus4',
+    displayName: 'Sus4'
+  },
   
   // 7th Chords
   major7: {
@@ -187,6 +197,11 @@ MusicTheory.CHORD_TYPES = {
     suffix: 'ø7', // Half-diminished symbol
     displayName: 'Half-Dim7'
   },
+  minorMajor7: {
+    intervals: [0, 3, 7, 11],
+    suffix: 'm(maj7)',
+    displayName: 'Min(Maj7)'
+  },
   
   // 9th Chords
   dominant9: {
@@ -203,6 +218,11 @@ MusicTheory.CHORD_TYPES = {
     intervals: [0, 3, 7, 10, 14],
     suffix: 'm9',
     displayName: 'Min9'
+  },
+  minorMajor9: {
+    intervals: [0, 3, 7, 11, 14],
+    suffix: 'm(maj9)',
+    displayName: 'Min(Maj9)'
   }
 };
 

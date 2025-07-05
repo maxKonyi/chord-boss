@@ -348,7 +348,7 @@ function ChordTrainer({ activeNotes }) {
                     settings.chordTypes.includes(type)
                   )}
                   onChange={e => {
-                    const triadTypes = ['major', 'minor', 'diminished', 'augmented'];
+                    const triadTypes = ['major', 'minor', 'diminished', 'augmented', 'sus2', 'sus4'];
                     let newTypes = [...settings.chordTypes];
                     
                     if (e.target.checked) {
@@ -433,6 +433,38 @@ function ChordTrainer({ activeNotes }) {
                 >
                   Augmented
                 </button>
+                
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('sus2') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('sus2')) {
+                      const index = newTypes.indexOf('sus2');
+                      newTypes.splice(index, 1);
+                    } else {
+                      newTypes.push('sus2');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                >
+                  Sus2
+                </button>
+                
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('sus4') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('sus4')) {
+                      const index = newTypes.indexOf('sus4');
+                      newTypes.splice(index, 1);
+                    } else {
+                      newTypes.push('sus4');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                >
+                  Sus4
+                </button>
               </div>
             </div>
           </div>
@@ -453,7 +485,7 @@ function ChordTrainer({ activeNotes }) {
                     settings.chordTypes.includes(type)
                   )}
                   onChange={e => {
-                    const seventhTypes = ['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7'];
+                    const seventhTypes = ['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7', 'minorMajor7'];
                     let newTypes = [...settings.chordTypes];
                     
                     if (e.target.checked) {
@@ -559,6 +591,23 @@ function ChordTrainer({ activeNotes }) {
                 >
                   Half-Diminished 7
                 </button>
+                
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('minorMajor7') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('minorMajor7')) {
+                      const index = newTypes.indexOf('minorMajor7');
+                      newTypes.splice(index, 1);
+                    } else {
+                      newTypes.push('minorMajor7');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Root, Minor 3rd, Perfect 5th, Major 7th"
+                >
+                  m(maj7)
+                </button>
               </div>
             </div>
           </div>
@@ -579,7 +628,7 @@ function ChordTrainer({ activeNotes }) {
                     settings.chordTypes.includes(type)
                   )}
                   onChange={e => {
-                    const ninthTypes = ['dominant9', 'major9', 'minor9'];
+                    const ninthTypes = ['dominant9', 'major9', 'minor9', 'minorMajor9'];
                     let newTypes = [...settings.chordTypes];
                     
                     if (e.target.checked) {
@@ -650,6 +699,23 @@ function ChordTrainer({ activeNotes }) {
                   title="Root, Minor 3rd, Perfect 5th, Minor 7th, Major 9th"
                 >
                   Minor 9
+                </button>
+                
+                <button 
+                  className={`chord-type-toggle ${settings.chordTypes.includes('minorMajor9') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('minorMajor9')) {
+                      const index = newTypes.indexOf('minorMajor9');
+                      newTypes.splice(index, 1);
+                    } else {
+                      newTypes.push('minorMajor9');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Root, Minor 3rd, Perfect 5th, Major 7th, Major 9th"
+                >
+                  m(maj9)
                 </button>
               </div>
             </div>
