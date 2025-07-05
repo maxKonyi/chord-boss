@@ -265,6 +265,36 @@
 }
 
 /* Active chord types summary */
+
+/* Compact chord selection list overrides */
+.chord-family-accordion {
+  border: none;
+  margin-bottom: 0.5rem;
+}
+
+.chord-family-header {
+  background: none;
+  padding: 0;
+  cursor: default; /* disable pointer indication */
+  font-size: 0.95rem;
+  color: #ccc;
+  margin-bottom: 0.25rem;
+}
+
+.chord-family-header span:first-child {
+  display: none; /* hide accordion arrow */
+}
+
+.chord-family-content {
+  padding: 0;
+  display: block; /* ensure always visible */
+}
+
+.chord-type-toggles {
+  gap: 0.35rem;
+}
+
+
 .active-chord-types {
   display: flex;
   align-items: center;

@@ -518,7 +518,7 @@ function ChordTrainer({ activeNotes }) {
               </label>
             </div>
             
-            <div id="sevenths-content" className="chord-family-content" style={{display: 'none'}}>
+            <div id="sevenths-content" className="chord-family-content">
               <div className="chord-type-toggles">
                 <button 
                   className={`chord-type-toggle ${settings.chordTypes.includes('major7') ? 'active' : ''}`}
@@ -661,7 +661,7 @@ function ChordTrainer({ activeNotes }) {
               </label>
             </div>
             
-            <div id="ninths-content" className="chord-family-content" style={{display: 'none'}}>
+            <div id="ninths-content" className="chord-family-content">
               <div className="chord-type-toggles">
                 <button 
                   className={`chord-type-toggle ${settings.chordTypes.includes('dominant9') ? 'active' : ''}`}
