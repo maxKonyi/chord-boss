@@ -171,6 +171,18 @@ MusicTheory.CHORD_TYPES = {
     displayName: 'Sus4'
   },
   
+  // 6th Chords
+  '6': {
+    intervals: [0, 4, 7, 9],
+    suffix: '6',
+    displayName: '6'
+  },
+  'm6': {
+    intervals: [0, 3, 7, 9],
+    suffix: 'm6',
+    displayName: 'm6'
+  },
+  
   // 7th Chords
   major7: {
     intervals: [0, 4, 7, 11],

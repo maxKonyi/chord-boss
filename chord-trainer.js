@@ -482,6 +482,68 @@ function ChordTrainer({ activeNotes }) {
             </div>
           </div>
           
+          {/* 6th Chords Category */}
+          <div className="chord-family-accordion">
+            <div className="chord-family-header">
+              6th Chords
+              <label className="select-all-switch">
+                <input
+                  type="checkbox"
+                  checked={['6','m6'].every(type => settings.chordTypes.includes(type))}
+                  onChange={e => {
+                    const sixthTypes = ['6','m6'];
+                    let newTypes = [...settings.chordTypes];
+                    if (e.target.checked) {
+                      sixthTypes.forEach(type => {
+                        if (!newTypes.includes(type)) newTypes.push(type);
+                      });
+                    } else {
+                      newTypes = newTypes.filter(type => !sixthTypes.includes(type));
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                />
+                <span className="select-all-label">Select All</span>
+              </label>
+            </div>
+            <div id="sixths-content" className="chord-family-content">
+              <div className="chord-type-toggles">
+                {/* Major 6 */}
+                <button
+                  className={`chord-type-toggle ${settings.chordTypes.includes('6') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('6')) {
+                      newTypes.splice(newTypes.indexOf('6'),1);
+                    } else {
+                      newTypes.push('6');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Root, Major 3rd, Perfect 5th, Major 6th"
+                >
+                  6
+                </button>
+                {/* Minor 6 */}
+                <button
+                  className={`chord-type-toggle ${settings.chordTypes.includes('m6') ? 'active' : ''}`}
+                  onClick={() => {
+                    const newTypes = [...settings.chordTypes];
+                    if (newTypes.includes('m6')) {
+                      newTypes.splice(newTypes.indexOf('m6'),1);
+                    } else {
+                      newTypes.push('m6');
+                    }
+                    setSettings({...settings, chordTypes: newTypes});
+                  }}
+                  title="Root, Minor 3rd, Perfect 5th, Major 6th"
+                >
+                  m6
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* 7th Chords Accordion */}
           <div className="chord-family-accordion">
             <div className="chord-family-header" onClick={() => {
