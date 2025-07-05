@@ -594,6 +594,24 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     return false;
   }
   
+  // Support optional 5th logic (for seventh chords and larger)
+  const optionalFifthFlag = expectedChord.optionalFifth === true;
+  let rootPc = null;
+  if (optionalFifthFlag && expectedChord.root) {
+    // Helper to convert note name to pitch class
+    const toPc = (note) => {
+      let idx = MusicTheory.SHARP_NOTES.indexOf(note);
+      if (idx === -1) idx = MusicTheory.FLAT_NOTES.indexOf(note);
+      if (idx === -1 && MusicTheory.ENHARMONIC_EQUIVALENTS[note]) {
+        const enh = MusicTheory.ENHARMONIC_EQUIVALENTS[note];
+        idx = MusicTheory.SHARP_NOTES.indexOf(enh);
+        if (idx === -1) idx = MusicTheory.FLAT_NOTES.indexOf(enh);
+      }
+      return idx; // may be -1
+    };
+    rootPc = toPc(expectedChord.root);
+  }
+
   // If inversions are not being checked, use simple pitch class validation
   if (!expectedChord.checkInversion) {
     // Convert played notes to a Set of pitch classes (0-11)
@@ -607,18 +625,31 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     expectedChord.midiNotes.forEach(midi => {
       expectedPitchClasses.add(midi % 12);
     });
-    
-    // Check if all expected pitch classes are played
-    if (expectedPitchClasses.size !== playedPitchClasses.size) {
-      return false;
+
+    // Calculate perfect 5th pitch class if applicable and remove from required set when optional
+    let perfect5thPc = null;
+    if (optionalFifthFlag && rootPc !== null && rootPc >= 0 && expectedChord.midiNotes.length >= 4) {
+      perfect5thPc = (rootPc + 7) % 12;
+      if (expectedPitchClasses.has(perfect5thPc)) {
+        expectedPitchClasses.delete(perfect5thPc);
+      }
     }
-    
-    for (const pitchClass of expectedPitchClasses) {
-      if (!playedPitchClasses.has(pitchClass)) {
+
+    // Ensure all required notes are played
+    for (const pc of expectedPitchClasses) {
+      if (!playedPitchClasses.has(pc)) {
         return false;
       }
     }
-    
+
+    // Disallow extra notes except the optional perfect 5th (if flag on)
+    for (const pc of playedPitchClasses) {
+      if (!expectedPitchClasses.has(pc)) {
+        if (!(optionalFifthFlag && pc === perfect5thPc)) {
+          return false;
+        }
+      }
+    }
     return true;
   } else {
     // For inversion checking, we need to determine the bass note (lowest played note)
@@ -647,17 +678,31 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     expectedChord.midiNotes.forEach(midi => {
       expectedPitchClasses.add(midi % 12);
     });
-    
-    if (expectedPitchClasses.size !== playedPitchClasses.size) {
-      return false;
+
+    // Handle optional 5th removal for seventh chords+
+    let perfect5thPc = null;
+    if (optionalFifthFlag && rootPc !== null && rootPc >= 0 && expectedChord.midiNotes.length >= 4) {
+      perfect5thPc = (rootPc + 7) % 12;
+      if (expectedPitchClasses.has(perfect5thPc)) {
+        expectedPitchClasses.delete(perfect5thPc);
+      }
     }
-    
-    for (const pitchClass of expectedPitchClasses) {
-      if (!playedPitchClasses.has(pitchClass)) {
+
+    // Validate required notes
+    for (const pc of expectedPitchClasses) {
+      if (!playedPitchClasses.has(pc)) {
         return false;
       }
     }
-    
+
+    // Extra notes check (allow optional 5th)
+    for (const pc of playedPitchClasses) {
+      if (!expectedPitchClasses.has(pc)) {
+        if (!(optionalFifthFlag && pc === perfect5thPc)) {
+          return false;
+        }
+      }
+    }
     return true;
   }
 };

@@ -22,7 +22,8 @@ function ChordTrainer({ activeNotes }) {
     octave: 4,
     timerMaxSeconds: 10, // Maximum time for timer bar
     questionCount: 10, // Number of questions per session
-    questionDelay: 1500 // Delay between questions in milliseconds (default 1.5 seconds)
+    questionDelay: 1500, // Delay between questions in milliseconds (default 1.5 seconds)
+    optionalFifth: false // 5th optional for 7th chords and larger
   });
   
   // Reference to track active notes
@@ -91,6 +92,7 @@ function ChordTrainer({ activeNotes }) {
     // Make sure we have a valid chord before setting properties
     if (newChord) {
       newChord.checkInversion = settings.allowInversions;
+      newChord.optionalFifth = settings.optionalFifth;
       setCurrentChord(newChord);
     } else {
       // If chord generation failed, try again with default settings
@@ -98,6 +100,7 @@ function ChordTrainer({ activeNotes }) {
       const defaultChord = MusicTheory.generateChord('C', 'major', 'root', 4);
       if (defaultChord) {
         defaultChord.checkInversion = settings.allowInversions;
+        defaultChord.optionalFifth = settings.optionalFifth;
         setCurrentChord(defaultChord);
       }
     }
@@ -156,7 +159,17 @@ function ChordTrainer({ activeNotes }) {
     activeNotesRef.current = new Set(activeNotes);
     
     // Check if the current chord is played correctly
-    if (currentChord && isRunning && activeNotes.size >= currentChord.midiNotes.length) {
+    // Determine how many notes are actually required (handle optional 5th)
+      const requiredNoteCount = (() => {
+        if (!currentChord) return 0;
+        let count = currentChord.midiNotes.length;
+        if (currentChord.optionalFifth && currentChord.midiNotes.length >= 4) {
+          // Allow one note fewer when perfect 5th is optional
+          count -= 1;
+        }
+        return count;
+      })();
+      if (currentChord && isRunning && activeNotes.size >= requiredNoteCount) {
       // Convert activeNotes Set to an array of MIDI note numbers
       const playedNotesArray = Array.from(activeNotes);
       const isCorrect = MusicTheory.validateChord(playedNotesArray, currentChord);
@@ -735,7 +748,22 @@ function ChordTrainer({ activeNotes }) {
             </label>
           </div>
         </div>
-        
+
+        {/* Optional 5th Toggle */}
+        <div className="settings-group">
+          <h4>5th Optional (7th chords+)</h4>
+          <div>
+            <label>
+              <input
+                type="checkbox"
+                checked={settings.optionalFifth}
+                onChange={e => setSettings({ ...settings, optionalFifth: e.target.checked })}
+              />
+              Make Perfect 5th Optional for 7th chords and larger
+            </label>
+          </div>
+        </div>
+
         <div className="settings-group">
           <h4>Session</h4>
           <div>
