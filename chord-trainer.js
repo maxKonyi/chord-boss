@@ -343,15 +343,10 @@ function ChordTrainer({ activeNotes }) {
             )}
           </div>
           
-          {/* Triads Accordion */}
+          {/* Triads Section */}
           <div className="chord-family-accordion">
-            <div className="chord-family-header" onClick={() => {
-              const elem = document.getElementById('triads-content');
-              elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
-              document.getElementById('triads-arrow').textContent = 
-                elem.style.display === 'none' ? '▶' : '▼';
-            }}>
-              <span id="triads-arrow">▼</span> Triads
+            <div className="chord-family-header">
+              Triads
               <label className="select-all-switch">
                 <input 
                   type="checkbox" 
@@ -379,7 +374,7 @@ function ChordTrainer({ activeNotes }) {
               </label>
             </div>
             
-            <div id="triads-content" className="chord-family-content">
+            <div id="triads-content" className="chord-family-content" style={{display: 'block'}}>
               <div className="chord-type-toggles">
                 <button 
                   className={`chord-type-toggle ${settings.chordTypes.includes('major') ? 'active' : ''}`}
@@ -504,7 +499,7 @@ function ChordTrainer({ activeNotes }) {
                 <span className="select-all-label">Select All</span>
               </label>
             </div>
-            <div id="sixths-content" className="chord-family-content">
+            <div id="sixths-content" className="chord-family-content" style={{display: 'block'}}>
               <div className="chord-type-toggles">
                 {/* Major 6 */}
                 <button
@@ -542,16 +537,11 @@ function ChordTrainer({ activeNotes }) {
             </div>
           </div>
 
-          {/* 7th Chords Accordion */}
+          {/* 7th Chords Section */}
           <div className="chord-family-accordion">
-            <div className="chord-family-header" onClick={() => {
-              const elem = document.getElementById('sevenths-content');
-              elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
-              document.getElementById('sevenths-arrow').textContent = 
-                elem.style.display === 'none' ? '▶' : '▼';
-            }}>
-              <span id="sevenths-arrow">▶</span> 7th Chords
-              <label className="select-all-switch" onClick={e => e.stopPropagation()}>
+            <div className="chord-family-header">
+              7th Chords
+              <label className="select-all-switch">
                 <input 
                   type="checkbox" 
                   checked={['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7'].every(type => 
@@ -578,7 +568,7 @@ function ChordTrainer({ activeNotes }) {
               </label>
             </div>
             
-            <div id="sevenths-content" className="chord-family-content">
+            <div id="sevenths-content" className="chord-family-content" style={{display: 'block'}}>
               <div className="chord-type-toggles">
                 <button 
                   className={`chord-type-toggle ${settings.chordTypes.includes('major7') ? 'active' : ''}`}
@@ -685,16 +675,11 @@ function ChordTrainer({ activeNotes }) {
             </div>
           </div>
           
-          {/* 9th Chords Accordion */}
+          {/* 9th Chords Section */}
           <div className="chord-family-accordion">
-            <div className="chord-family-header" onClick={() => {
-              const elem = document.getElementById('ninths-content');
-              elem.style.display = elem.style.display === 'none' ? 'block' : 'none';
-              document.getElementById('ninths-arrow').textContent = 
-                elem.style.display === 'none' ? '▶' : '▼';
-            }}>
-              <span id="ninths-arrow">▶</span> 9th Chords
-              <label className="select-all-switch" onClick={e => e.stopPropagation()}>
+            <div className="chord-family-header">
+              9th Chords
+              <label className="select-all-switch">
                 <input 
                   type="checkbox" 
                   checked={['dominant9', 'major9', 'minor9', '6(9)', 'm6(9)'].every(type => 
@@ -721,7 +706,7 @@ function ChordTrainer({ activeNotes }) {
               </label>
             </div>
             
-            <div id="ninths-content" className="chord-family-content">
+            <div id="ninths-content" className="chord-family-content" style={{display: 'block'}}>
               <div className="chord-type-toggles">
                 <button 
                   className={`chord-type-toggle ${settings.chordTypes.includes('dominant9') ? 'active' : ''}`}

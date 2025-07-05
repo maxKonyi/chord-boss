@@ -206,14 +206,9 @@
 .chord-family-header {
   background-color: #2a2a2a;
   padding: 0.75rem;
-  cursor: pointer;
   display: flex;
   align-items: center;
   user-select: none;
-}
-
-.chord-family-header:hover {
-  background-color: #333;
 }
 
 .chord-family-header span:first-child {
