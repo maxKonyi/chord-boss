@@ -352,9 +352,10 @@ function ChordTrainer({ activeNotes }) {
                 style={{
                   width: '80px',
                   position: 'relative',
-                  height: '20px',
+                  height: '10px',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  marginTop: '20px'
                 }}
               >
                 {/* Slider track */}
