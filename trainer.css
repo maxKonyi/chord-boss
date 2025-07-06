@@ -174,7 +174,12 @@
 .settings-panel label {
   align-items: center;
   display: flex;
-  margin: 0.75rem 0;
+  margin: 0.25rem 0;
+}
+
+/* Make Session section labels more compact */
+.settings-group:first-child label {
+  margin: 0.1rem 0;
 }
 
 .settings-panel input[type="checkbox"] {
@@ -186,6 +191,12 @@
   border-bottom: 1px solid #444;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
+}
+
+/* Make the Session group more compact */
+.settings-group:first-child {
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
 .settings-group:last-child {
