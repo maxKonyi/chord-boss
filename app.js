@@ -151,7 +151,7 @@ function App() {
 
 function Home({ onSelect, midiStatus, activeNotes }) {
   return (
-    <div style={{ textAlign: 'center', width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ textAlign: 'center', maxWidth: '1000px', margin: '0 auto' }}>
       <h1>Composer Piano Trainer</h1>
       <p style={{ margin: '1rem 0 2rem' }}>Choose a training mode:</p>
       <div>
@@ -173,7 +173,7 @@ function Home({ onSelect, midiStatus, activeNotes }) {
 
 function TrainerLayout({ title, onBack, children, activeNotes, midiStatus }) {
   return (
-    <div style={{ width: '100%', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ width: '100%', padding: '0 1rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0' }}>
         <h2>{title}</h2>
         <button onClick={onBack}>Back</button>
