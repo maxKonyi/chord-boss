@@ -15,7 +15,8 @@
 }
 
 body {
-  background: var(--bg);
+  /* Removed background to allow app-container background to show through */
+  background: transparent;
   color: var(--text-primary);
   height: 100vh;
   display: flex;
@@ -26,6 +27,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: transparent;
 }
 
 /* Simple button styling */

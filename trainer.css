@@ -5,6 +5,8 @@
   display: flex;
   height: 100%;
   width: 100%;
+  background-color: #0c0a12;
+  background-image: linear-gradient(to bottom, #0f0c16, #0a080f);
 }
 
 .sidebar {
@@ -32,12 +34,15 @@
   width: calc(100% - 450px);
   justify-content: center;
   box-sizing: border-box;
+  background-color: transparent; /* Make transparent so app-container background shows through */
+  background-image: none;
 }
 
 /* Question display */
 .question-display {
-  background-color: #333;
+  background: linear-gradient(to bottom, #2d1e3e, #1a1228);
   border-radius: 8px;
+  border: 1px solid #3a2a4a;
   color: white;
   width: 100%;
   max-width: 800px;
@@ -48,17 +53,21 @@
   text-align: center;
   width: 80%;
   max-width: 500px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 /* Timer bar */
 .timer-container {
-  background-color: #444;
+  background-color: #1a1228;
   border-radius: 4px;
+  border: 1px solid #3a2a4a;
   height: 8px;
   margin: 0.25rem auto 0.25rem;
   overflow: hidden;
   width: 80%;
   max-width: 500px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .timer-progress {
@@ -67,15 +76,18 @@
 }
 
 .timer-green {
-  background-color: #4CAF50;
+  background: linear-gradient(to right, #7e57c2, #5e35b1);
+  box-shadow: 0 0 5px rgba(126, 87, 194, 0.5);
 }
 
 .timer-yellow {
-  background-color: #FFC107;
+  background: linear-gradient(to right, #9575cd, #7e57c2);
+  box-shadow: 0 0 5px rgba(149, 117, 205, 0.5);
 }
 
 .timer-red {
-  background-color: #F44336;
+  background: linear-gradient(to right, #b39ddb, #9575cd);
+  box-shadow: 0 0 5px rgba(179, 157, 219, 0.5);
 }
 
 /* Score display */
@@ -85,26 +97,36 @@
   margin: 0.25rem auto 0.25rem;
   width: 80%;
   max-width: 500px;
+  background: linear-gradient(to bottom, #2d1e3e, #1a1228);
+  border: 1px solid #3a2a4a;
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .score-item {
   text-align: center;
+  color: #e0e0e0;
 }
 
 .score-value {
   font-size: 1.5rem;
   font-weight: bold;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
 .score-label {
-  color: #888;
+  color: #b39ddb;
   font-size: 0.9rem;
   margin-top: 0.25rem;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 /* Result feedback */
 .result-feedback {
-  background-color: #333;
+  background: linear-gradient(to bottom, #2d1e3e, #1a1228);
+  border: 1px solid #3a2a4a;
   border-radius: 8px;
   margin: 0.25rem auto 0.25rem;
   padding: 0.75rem;
@@ -112,6 +134,9 @@
   width: 80%;
   max-width: 500px;
   height: 30px; /* Fixed height instead of min-height */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  color: #e0e0e0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   justify-content: center;
