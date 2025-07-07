@@ -9,8 +9,9 @@
 
 .sidebar {
   width: 450px;
-  background-color: #1a1a1a;
-  border-right: 1px solid #333;
+  background-color: #121218;
+  background-image: linear-gradient(to bottom, #1a1a24, #121218);
+  border-right: 1px solid #2d1e3e;
   padding: 1rem;
   overflow-y: auto;
   max-height: 100vh;
@@ -18,7 +19,7 @@
   left: 0;
   top: 0;
   bottom: 0;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
 }
 
 .main-content {
@@ -188,16 +189,18 @@
 .settings-group {
   margin-bottom: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid #3a2a4a;
+  position: relative;
 }
 
 .settings-group h4 {
   margin-top: 0;
   margin-bottom: 0.5rem;
   font-size: 1rem;
-  color: #aaa;
+  color: #c5b8d5;
   padding-bottom: 0.25rem;
   display: flex;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.5);
   align-items: center;
 }
 
@@ -209,6 +212,7 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  color: #c5b8d5;
 }
 
 .settings-group input[type="checkbox"] {
@@ -221,6 +225,7 @@
   display: flex;
   margin: 0.3rem 0;
   font-size: 0.95rem;
+  color: #c5b8d5;
 }
 
 /* Make Session section labels more compact */
@@ -297,10 +302,12 @@
 .select-all-switch {
   margin-left: auto !important;
   font-size: 0.8rem;
+  opacity: 0.9;
 }
 
 .select-all-label {
-  color: #aaa;
+  color: #bbb;
+  font-size: 0.85rem;
 }
 
 .chord-family-content {
@@ -318,26 +325,30 @@
 }
 
 .chord-type-toggle {
-  background-color: #333;
-  border: 1px solid #444;
+  background: linear-gradient(to bottom, #3a3048, #251830);
+  border: 1px solid #4a3b59;
   border-radius: 0.5rem;
-  color: #aaa;
+  color: #c5b8d5;
   padding: 0.2rem 0.4rem;
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
   margin: 1px 1px 0 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 1px rgba(0,0,0,0.3);
 }
 
 .chord-type-toggle:hover {
-  background-color: #3a3a3a;
-  color: #ccc;
+  background: linear-gradient(to bottom, #4a3b59, #352642);
+  color: #d5c8e5;
+  border-color: #5a4b69;
 }
 
 .chord-type-toggle.active {
-  background-color: #1e88e5;
+  background: linear-gradient(to bottom, #7e57c2, #5e35b1);
   color: white;
-  border-color: #1976d2;
+  border-color: #4527a0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 /* Active chord types summary */
@@ -345,16 +356,21 @@
 /* Compact chord selection list overrides */
 .chord-family-accordion {
   border: none;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  position: relative;
 }
 
 .chord-family-header {
   background: none;
   padding: 0;
-  cursor: default; /* disable pointer indication */
-  font-size: 0.95rem;
-  color: #ccc;
-  margin-bottom: 0.25rem;
+  cursor: default;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0.5rem 0 0.25rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.2rem;
+  letter-spacing: 0.02em;
 }
 
 .chord-family-header span:first-child {
@@ -374,19 +390,52 @@
 /* Active chord types component removed */
 
 .clear-all-btn {
-  background-color: #444;
-  color: #ddd;
-  border: none;
+  background: linear-gradient(to bottom, #4a3b59, #352642);
+  color: #d5c8e5;
+  border: 1px solid #5a4b69;
   border-radius: 4px;
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   font-size: 0.75rem;
   cursor: pointer;
   margin-left: auto;
   line-height: 1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .clear-all-btn:hover {
-  background-color: #555;
+  background: linear-gradient(to bottom, #5a4b69, #453652);
+  color: #e5d8f5;
+  border-color: #6a5b79;
+}
+
+select {
+  background: linear-gradient(to bottom, #4a3b59, #352642);
+  color: #d5c8e5;
+  border: 1px solid #5a4b69;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+button {
+  background: linear-gradient(to bottom, #4a3b59, #352642);
+  color: #d5c8e5;
+  border: 1px solid #5a4b69;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+button:hover {
+  background: linear-gradient(to bottom, #5a4b69, #453652);
+  color: #e5d8f5;
+  border-color: #6a5b79;
 }
 
 /* Keyboard wrapper to center the piano keyboard in the main content area */
