@@ -43,11 +43,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     // Update question count but don't add points
     const newQuestionCount = questionCount + 1;
     setQuestionCount(newQuestionCount);
-    setIsRunning(false);
     
     // Check if we've reached the question limit
     if (newQuestionCount >= settings.questionCount) {
       // End of session
+      setIsRunning(false); // Only set to false when training is complete
       setFeedback({
         type: 'complete',
         message: `Training complete! Final score: ${score}`
@@ -955,11 +955,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         {/* Feedback message area - fixed height */}
         <div className={`result-feedback ${feedback ? (feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : 'result-incorrect') : ''}`}>
           {feedback ? feedback.message : ''}
-          {feedback?.type === 'complete' && (
-            <div className="controls" style={{ marginTop: '1rem' }}>
-              <button onClick={startTraining}>Start New Session</button>
-            </div>
-          )}
+          {/* Removed duplicate Start New Session button */}
         </div>
         
         {/* Piano keyboard inside the main content area */}
