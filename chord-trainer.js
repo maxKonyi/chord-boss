@@ -32,6 +32,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   // Timer interval reference
   const timerRef = useRef(null);
   
+  // Reference to track the question delay timeout
+  const questionDelayTimeoutRef = useRef(null);
+  
   // Skip the current question and move to the next one
   const skipQuestion = () => {
     // Stop timer
@@ -67,9 +70,16 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       message: 'Question skipped'
     });
     
+    // Clear any existing timeout
+    if (questionDelayTimeoutRef.current) {
+      clearTimeout(questionDelayTimeoutRef.current);
+      questionDelayTimeoutRef.current = null;
+    }
+    
     // Generate next question after the configured delay
-    setTimeout(() => {
+    questionDelayTimeoutRef.current = setTimeout(() => {
       generateNewQuestion();
+      questionDelayTimeoutRef.current = null; // Clear the reference after it's used
     }, settings.questionDelay);
   };
   
@@ -84,6 +94,12 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         message: `Training complete! Final score: ${score}`
       });
       return;
+    }
+    
+    // Make sure any previous timer is cleared
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
     
     // Generate a new chord and add checkInversion flag based on settings
@@ -104,30 +120,43 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         setCurrentChord(defaultChord);
       }
     }
+    
+    // Update game state
     setIsRunning(true);
     const now = Date.now();
     setStartTime(now);
     setFeedback(null);
     
-    // Start the timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    
+    // Start a new timer
     timerRef.current = setInterval(() => {
       setElapsedTime(Date.now() - now);
     }, 100);
     
   }, [settings, questionCount, score]);
   
-  // Start the training session
+  // Start a new training session
   const startTraining = () => {
+    // Reset all game state completely
     setScore(0);
     setQuestionCount(0);
-    generateNewQuestion();
+    setElapsedTime(0);
+    setFeedback(null); // Clear any feedback messages
+    setCurrentChord(null); // Clear current chord before generating a new one
+    
+    // Stop any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Small delay to ensure state is reset before generating a new question
+    // This prevents potential race conditions
+    setTimeout(() => {
+      generateNewQuestion();
+    }, 10);
   };
   
-  // Reset everything
+  // Reset everything and end the current game
   const resetTraining = () => {
     // Stop the timer if it's running
     if (timerRef.current) {
@@ -135,23 +164,25 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       timerRef.current = null;
     }
     
+    // Clear any pending question delay timeout
+    if (questionDelayTimeoutRef.current) {
+      clearTimeout(questionDelayTimeoutRef.current);
+      questionDelayTimeoutRef.current = null;
+    }
+    
     // Reset all game state
     setIsRunning(false);
     setCurrentChord(null);
-    setScore(0);
-    setQuestionCount(0);
     setElapsedTime(0);
     
-    // Show a feedback message briefly before clearing it
+    // Show a feedback message with the final score
     setFeedback({
-      type: 'info',
-      message: 'Game ended'
+      type: 'complete',
+      message: `Game ended. Final score: ${score}`
     });
     
-    // Clear the feedback message after a short delay
-    setTimeout(() => {
-      setFeedback(null);
-    }, 1000);
+    // Don't reset score and question count immediately
+    // This allows the player to see their final stats
   };
   
   // Update active notes reference when activeNotes changes
