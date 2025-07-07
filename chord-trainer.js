@@ -935,14 +935,14 @@ function ChordTrainer({ activeNotes }) {
         
         {/* Controls - always visible */}
         <div className="controls" style={{ marginTop: '1rem' }}>
-          {!isRunning && !feedback?.type === 'complete' ? (
+          {!isRunning ? (
             <button onClick={startTraining}>Start Training</button>
-          ) : isRunning ? (
+          ) : (
             <>
               <button onClick={skipQuestion} className="skip-button">Skip</button>
               <button onClick={resetTraining} className="end-button">End Game</button>
             </>
-          ) : null}
+          )}
         </div>
         
         {/* Feedback message area - fixed height */}
