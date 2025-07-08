@@ -94,6 +94,26 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setQuestionCount(newQuestionCount);
     
     // Check if we've reached the question limit
+  };
+  
+  // Handle preset selection
+  const handleSelectPreset = (presetId) => {
+    // Apply the preset settings
+    const newSettings = Presets.applyPreset(presetId, settings);
+    
+    // Update settings with the preset and mark this preset as active
+    setSettings({
+      ...newSettings,
+      activePresetId: presetId
+    });
+    
+    // Show feedback about the selected preset
+    const preset = Presets.getPresetById(presetId);
+    setFeedback({
+      type: 'preset',
+      message: `Preset selected: ${preset.name}`
+    });
+  };
     if (newQuestionCount >= settings.questionCount) {
       // End of session
       setIsRunning(false); // Only set to false when training is complete
@@ -127,25 +147,6 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       generateNewQuestion();
       questionDelayTimeoutRef.current = null; // Clear the reference after it's used
     }, settings.questionDelay);
-  };
-  
-  // Handle preset selection
-  const handleSelectPreset = (presetId) => {
-    // Apply the preset settings
-    const newSettings = Presets.applyPreset(presetId, settings);
-    
-    // Update settings with the preset and mark this preset as active
-    setSettings({
-      ...newSettings,
-      activePresetId: presetId
-    });
-    
-    // Show feedback about the selected preset
-    const preset = Presets.getPresetById(presetId);
-    setFeedback({
-      type: 'preset',
-      message: `Preset selected: ${preset.name}`
-    });
   };
   
   // Generate a new chord question
@@ -384,11 +385,6 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         </div>
         
         <div className="settings-panel">
-          {/* Preset Selector */}
-          <div className="settings-group">
-            <PresetSelector onSelectPreset={handleSelectPreset} />
-          </div>
-          
           {/* Session Settings - Moved to top */}
           <div className="settings-group">
             <h4>Session</h4>
@@ -1054,7 +1050,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         </div>
         
         {/* Feedback message area - fixed height */}
-        <div className={`result-feedback ${feedback ? (feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : feedback.type === 'preset' ? 'result-preset' : 'result-incorrect') : ''}`}>
+        <div className={`result-feedback ${feedback ? (feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : 'result-incorrect') : ''}`}>
           {feedback ? feedback.message : ''}
           {/* Removed duplicate Start New Session button */}
         </div>
