@@ -500,9 +500,16 @@ MusicTheory.generateRandomChord = function(settings) {
   function pickRandomRoot(){
     const pc = Math.floor(Math.random()*12); // uniform pitch-class
     const names = pcNames[pc];
-    // If caller supplied a root list, restrict to those names
-    const allowed = config.rootNotes.length ? names.filter(n=>config.rootNotes.includes(n)) : names;
-    if (allowed.length===0) return null; // try again
+    // If caller supplied a non-empty root list, restrict to those names
+    // Otherwise use all available names for this pitch class
+    const allowed = (config.rootNotes && config.rootNotes.length > 0) ? 
+      names.filter(n => config.rootNotes.includes(n)) : 
+      names;
+    
+    // If no allowed notes were found, use the first name for this pitch class
+    // This prevents returning null which causes errors
+    if (allowed.length === 0) return names[0];
+    
     return allowed[Math.floor(Math.random()*allowed.length)];
   }
   let rootNote, chordType;
