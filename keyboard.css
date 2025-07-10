@@ -1,16 +1,49 @@
 /* Piano Keyboard Styling */
+/* Removed pulsing glow animation */
+
+/* Dark Mode Variables */
+:root {
+  --white-key-bg: linear-gradient(to bottom, #fff, #f0f0f0);
+  --white-key-border: #333;
+  --white-key-text: #333;
+  --white-key-shadow: rgba(0, 0, 0, 0.1);
+  --black-key-bg: linear-gradient(to bottom, #333, #111);
+  --black-key-text: #fff;
+  --black-key-shadow: rgba(0, 0, 0, 0.5);
+  --white-key-active-bg: linear-gradient(to bottom, #4cc9f0, #3a86ff);
+  --black-key-active-bg: linear-gradient(to bottom, #4361ee, #3a0ca3);
+}
+
+/* Dark Mode Class */
+.dark-mode-keyboard {
+  --white-key-bg: linear-gradient(to bottom, #2a2a2a, #222); /* Darker white keys */
+  --white-key-border: #111;
+  --white-key-text: #ddd;
+  --white-key-shadow: rgba(0, 0, 0, 0.4);
+  --black-key-bg: linear-gradient(to bottom, #111, #000);
+  --black-key-text: #aaa;
+  --black-key-shadow: rgba(0, 0, 0, 0.7);
+  /* Soothing purple/lavender colors for key-pressed states */
+  --white-key-active-bg: linear-gradient(to bottom, #9d4edd, #7b2cbf); /* Purple gradient */
+  --black-key-active-bg: linear-gradient(to bottom, #c77dff, #9d4edd); /* Lighter purple gradient */
+}
+
 .keyboard-container {
   margin: 3rem auto;
   width: 100%;
   max-width: 1000px;
   position: relative;
   height: 200px; /* Taller keyboard */
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3); /* Elegant shadow */
-  border-radius: 8px;
-  overflow: hidden;
-  background: linear-gradient(to bottom, #111, #000); /* Dark gradient background */
-  padding: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); /* Subtle shadow for floating effect */
+  /* Removed dark container */
+  /* Removed background gradient */
+  /* Removed padding */
+  transition: all 0.5s ease;
 }
+
+/* Removed gradient animation */
+
+/* Removed glow effect */
 
 .piano-keyboard {
   display: flex;
@@ -21,11 +54,11 @@
 
 /* White keys */
 .piano-key.white {
-  background: linear-gradient(to bottom, #fff, #f0f0f0); /* Subtle gradient */
-  border: 1px solid #333;
+  background: var(--white-key-bg); /* Using CSS variables */
+  border: 1px solid var(--white-key-border);
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  color: #333;
+  color: var(--white-key-text);
   flex: 1;
   margin: 0 2px; /* Slightly more space between keys */
   position: relative;
@@ -37,12 +70,19 @@
   align-items: center;
   padding-bottom: 15px;
   transition: all 0.2s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  box-shadow: 0 5px 15px var(--white-key-shadow); /* Subtle shadow for depth */
+  transform-origin: top center;
+}
+
+/* Subtle hover effect for white keys */
+.piano-key.white:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 5px 20px var(--white-key-shadow);
 }
 
 /* Black keys */
 .piano-key.black {
-  background: linear-gradient(to bottom, #333, #111); /* Rich gradient */
+  background: var(--black-key-bg); /* Using CSS variables */
   border-bottom-left-radius: 7px;
   border-bottom-right-radius: 7px;
   position: absolute;
@@ -50,26 +90,49 @@
   width: 3.5%; /* Keeping the width */
   height: 62%; /* Slightly taller */
   z-index: 2;
-  color: white;
+  color: var(--black-key-text);
   display: flex;
   justify-content: center;
   align-items: flex-end;
   padding-bottom: 5px;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5); /* Deeper shadow for black keys */
+  box-shadow: 0 3px 10px var(--black-key-shadow), 0 -1px 2px rgba(255, 255, 255, 0.1) inset; /* Enhanced shadow with inset highlight */
+  transform-origin: top center;
 }
 
-/* Active key states */
+/* Subtle hover effect for black keys */
+.piano-key.black:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 3px 12px var(--black-key-shadow), 0 -1px 2px rgba(255, 255, 255, 0.15) inset;
+}
+
+/* Removed ripple animation */
+
+/* Active key states with enhanced effects */
 .piano-key.white.active {
-  background: linear-gradient(to bottom, #4cc9f0, #3a86ff); /* Blue gradient */
-  transform: translateY(2px); /* Subtle press effect */
+  background: var(--white-key-active-bg); /* Using CSS variables */
+  transform: translateY(2px) scale(0.98); /* Enhanced press effect with slight scale */
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Reduced shadow when pressed */
+  /* Removed ripple effect */
 }
 
 .piano-key.black.active {
-  background: linear-gradient(to bottom, #4361ee, #3a0ca3); /* Deep blue gradient */
-  transform: translateY(2px); /* Subtle press effect */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Reduced shadow when pressed */
+  background: var(--black-key-active-bg); /* Using CSS variables */
+  transform: translateY(2px) scale(0.98); /* Enhanced press effect with slight scale */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px rgba(67, 97, 238, 0.5); /* Glow effect */
+}
+
+/* Add a subtle reflection effect to active keys */
+.piano-key.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* Key labels */
@@ -79,6 +142,15 @@
   letter-spacing: 0.5px; /* More elegant spacing */
   opacity: 0.8; /* Subtle transparency */
   font-family: 'Arial', sans-serif; /* Clean font */
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Subtle text shadow */
+}
+
+/* Make labels more visible when key is active */
+.piano-key.active .key-label {
+  opacity: 1;
+  transform: translateY(-2px);
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
 }
 
 /* Octave indicator */
@@ -87,4 +159,40 @@
   bottom: -25px;
   font-size: 12px;
   color: #888;
+}
+
+/* Dark Mode Toggle Button */
+.keyboard-mode-toggle {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  z-index: 10;
+}
+
+.mode-toggle-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+  font-family: 'Arial', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.mode-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mode-toggle-btn.dark {
+  background: #333;
+  color: #ddd;
+  border-color: #555;
+}
+
+.mode-toggle-btn.dark:hover {
+  background: #444;
 }

@@ -194,6 +194,8 @@ function MidiStatus({ midiAccess, midiError, midiInputs, selectedInput, handleIn
 }
 
 function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
+  // State for dark mode toggle
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
   // Generate keys for the specified octave range
   const keys = [];
   for (let octave = startOctave; octave <= endOctave; octave++) {
@@ -219,8 +221,21 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
   // Track white key index for positioning black keys
   let whiteKeyIndex = 0;
   
+  // Toggle dark mode function
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+  
   return (
-    <div className="keyboard-container">
+    <div className={`keyboard-container ${isDarkMode ? 'dark-mode-keyboard' : ''}`}>
+      <div className="keyboard-mode-toggle">
+        <button 
+          onClick={toggleDarkMode} 
+          className={`mode-toggle-btn ${isDarkMode ? 'dark' : 'light'}`}
+        >
+          {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+        </button>
+      </div>
       <div className="piano-keyboard">
         {/* Render white keys first (lower z-index) */}
         {keys.filter(key => !key.isSharp).map((key) => {
