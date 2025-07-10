@@ -14,7 +14,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             <label>
               MIDI Input: 
               <select 
-                value={midiStatus.selectedInput ? midiStatus.selectedInput.id : 'all'} 
+                value={midiStatus.selectedInput || ''} 
                 onChange={midiStatus.handleInputChange}
                 style={{ marginLeft: '0.5rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
               >
@@ -54,25 +54,18 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             </select>
           </label>
           
-          <label>
-            Timer: 
-            <select 
-              value={settings.timerMaxSeconds}
-              onChange={e => setSettings({...settings, timerMaxSeconds: parseInt(e.target.value)})}
-              style={{ marginLeft: '0.25rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
-            >
-              <option value="5">5s</option>
-              <option value="10">10s</option>
-              <option value="15">15s</option>
-              <option value="20">20s</option>
-            </select>
-          </label>
+          {/* Timer option removed as it's now controlled by difficulty */}
           
           <label>
             Difficulty: 
             <select 
               value={settings.difficulty}
-              onChange={e => setSettings({...settings, difficulty: e.target.value})}
+              onChange={e => {
+                // Use the updateSettings function to ensure localStorage is updated
+                const newSettings = {...settings, difficulty: e.target.value};
+                setSettings(newSettings);
+                localStorage.setItem('chordTrainerSettings', JSON.stringify(newSettings));
+              }}
               style={{ marginLeft: '0.25rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
             >
               <option value="easy">Easy (12s)</option>

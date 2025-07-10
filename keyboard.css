@@ -2,11 +2,169 @@
 /* Removed pulsing glow animation */
 
 /* Game UI Elements */
+/* Game Summary */
+.game-summary {
+  background: rgba(30, 30, 30, 0.8);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 500px;
+  margin: 20px auto;
+  text-align: center;
+}
+
+.game-summary h3 {
+  margin-top: 0;
+  color: #bb86fc; /* Purple to match the keyboard aesthetic */
+  font-size: 24px;
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.summary-item {
+  flex: 1;
+  min-width: 100px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.summary-label {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.new-record {
+  color: #bb86fc; /* Purple to match the keyboard aesthetic */
+  animation: pulse 1.5s infinite;
+}
+
+.previous-best {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.restart-button {
+  background-color: #bb86fc;
+  color: #000;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  margin-top: 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.restart-button:hover {
+  background-color: #a370d8;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Question display */
+.question-display {
+  font-size: 48px;
+  font-weight: bold;
+  text-align: center;
+  margin: 20px 0;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(187, 134, 252, 0.3);
+  transition: transform 0.3s ease;
+}
+
+/* Score display */
+.chord-trainer-score {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin: 15px 0;
+  color: #bb86fc;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.controls button {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controls button:hover {
+  background-color: #444;
+  transform: translateY(-2px);
+}
+
+.skip-button {
+  background-color: #555 !important;
+}
+
+.end-button {
+  background-color: #663399 !important;
+}
+
+/* Feedback area */
+.result-feedback {
+  min-height: 50px;
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.result-correct {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+}
+
+.result-incorrect, .result-timeout {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.result-skipped {
+  background-color: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+}
+
+.result-gameover {
+  background-color: rgba(103, 58, 183, 0.2);
+  color: #bb86fc;
+  font-weight: bold;
+}
+
 /* Lives display */
 .lives-display {
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
+  justify-content: center;
+  gap: 12px;
+  margin: 15px 0;
 }
 
 .life-icon {

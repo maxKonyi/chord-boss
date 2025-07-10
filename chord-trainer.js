@@ -5,18 +5,63 @@ const Sidebar = window.Sidebar;
 
 // Note: PresetSelector has been moved to sidebar.js
 
-// Lives Display Component
+// Lives display component
 function LivesDisplay({ lives }) {
   return (
     <div className="lives-display">
       {[...Array(3)].map((_, i) => (
-        <div 
-          key={i} 
-          className={`life-icon ${i < lives ? 'life-active' : 'life-lost'}`}
-        >
+        <div key={i} className={`life-icon ${i < lives ? 'life-active' : 'life-lost'}`}>
           ♥
         </div>
       ))}
+    </div>
+  );
+}
+
+// Game summary component
+function GameSummary({ questionCount, settings, score, accuracy, highestStreak, onRestart }) {
+  // Load previous best streak from localStorage if available
+  const previousBest = parseInt(localStorage.getItem('bestStreak') || '0');
+  const isNewRecord = highestStreak > previousBest;
+  
+  // Save new record if applicable
+  useEffect(() => {
+    if (isNewRecord && highestStreak > 0) {
+      localStorage.setItem('bestStreak', highestStreak.toString());
+    }
+  }, [isNewRecord, highestStreak]);
+  
+  return (
+    <div className="game-summary">
+      <h3>Game Summary</h3>
+      <div className="summary-stats">
+        <div className="summary-item">
+          <div className="summary-value">{questionCount}</div>
+          <div className="summary-label">Chords Played</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-value">{accuracy}%</div>
+          <div className="summary-label">Accuracy</div>
+        </div>
+        <div className="summary-item">
+          <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
+            {highestStreak} {isNewRecord && '🏆'}
+          </div>
+          <div className="summary-label">
+            Highest Streak
+            {isNewRecord && previousBest > 0 && (
+              <div className="previous-best">(Previous: {previousBest})</div>
+            )}
+          </div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-value">{score}</div>
+          <div className="summary-label">Final Score</div>
+        </div>
+      </div>
+      <button className="restart-button" onClick={onRestart}>
+        Play Again
+      </button>
     </div>
   );
 }
@@ -30,6 +75,59 @@ function getDifficultyTime(difficulty) {
     default: return 6;
   }
 }
+
+// Shared AudioContext for sound effects
+let sharedAudioContext = null;
+
+// Sound effect function
+const playSound = (type) => {
+  // Create AudioContext if it doesn't exist
+  if (!sharedAudioContext) {
+    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  
+  const oscillator = sharedAudioContext.createOscillator();
+  const gainNode = sharedAudioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(sharedAudioContext.destination);
+  
+  switch(type) {
+    case 'correct':
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 880; // A5
+      gainNode.gain.value = 0.1;
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 0.5);
+      oscillator.stop(sharedAudioContext.currentTime + 0.5);
+      break;
+    case 'lifeLoss':
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 220; // A3
+      gainNode.gain.value = 0.2;
+      oscillator.start();
+      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 0.7);
+      oscillator.stop(sharedAudioContext.currentTime + 0.7);
+      break;
+    case 'gameOver':
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.value = 220; // A3
+      gainNode.gain.value = 0.15;
+      oscillator.start();
+      
+      // Descending pitch for game over
+      setTimeout(() => {
+        oscillator.frequency.value = 165; // E3
+      }, 200);
+      setTimeout(() => {
+        oscillator.frequency.value = 110; // A2
+      }, 400);
+      
+      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 1.0);
+      oscillator.stop(sharedAudioContext.currentTime + 1.0);
+      break;
+  }
+};
 
 // Chord Trainer Component
 function ChordTrainer({ activeNotes, midiStatus }) {
@@ -49,21 +147,41 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [multiplier, setMultiplier] = useState(1); // Score multiplier based on streak
   const [highestStreak, setHighestStreak] = useState(0); // Track highest streak
   const [accuracy, setAccuracy] = useState(0);     // Percentage of correct answers
+  const [showSummary, setShowSummary] = useState(false); // Whether to show the game summary
   
-  // Settings for chord generation
-  const [settings, setSettings] = useState({
-    chordTypes: ['major', 'minor'], // Start with just major and minor triads
-    allowInversions: false,
-    // Empty array means use all valid note names with equal sharp/flat probability
-    rootNotes: [],
-    octave: 4,
-    timerMaxSeconds: 10, // Maximum time for timer bar
-    questionCount: 10, // Number of questions per session
-    questionDelay: 1500, // Delay between questions in milliseconds (default 1.5 seconds)
-    optionalFifth: false, // 5th optional for 7th chords and larger
-    activePresetId: null, // Track the currently active preset
-    difficulty: 'medium' // 'easy' (12s), 'medium' (6s), or 'hard' (3s)
+  // Settings for chord generation with localStorage persistence
+  const [settings, setSettings] = useState(() => {
+    // Try to get saved settings from localStorage
+    const savedSettings = localStorage.getItem('chordTrainerSettings');
+    
+    // Default settings
+    const defaultSettings = {
+      chordTypes: ['major', 'minor'], // Start with just major and minor triads
+      allowInversions: false,
+      // Empty array means use all valid note names with equal sharp/flat probability
+      rootNotes: [],
+      octave: 4,
+      timerMaxSeconds: 10, // Maximum time for timer bar
+      questionCount: 10, // Number of questions per session
+      questionDelay: 1500, // Delay between questions in milliseconds (default 1.5 seconds)
+      optionalFifth: false, // 5th optional for 7th chords and larger
+      activePresetId: null, // Track the currently active preset
+      difficulty: 'medium' // 'easy' (12s), 'medium' (6s), or 'hard' (3s)
+    };
+    
+    // If we have saved settings, parse and return them, otherwise use defaults
+    return savedSettings ? JSON.parse(savedSettings) : defaultSettings;
   });
+  
+  // Update settings and save to localStorage
+  const updateSettings = (newSettings) => {
+    setSettings(prev => {
+      const updatedSettings = { ...prev, ...newSettings };
+      // Save to localStorage
+      localStorage.setItem('chordTrainerSettings', JSON.stringify(updatedSettings));
+      return updatedSettings;
+    });
+  };
   
   // Reference to track active notes
   const activeNotesRef = useRef(new Set());
@@ -140,7 +258,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     }
     
     // Update settings with the preset and mark this preset as active
-    setSettings({
+    updateSettings({
       ...newSettings,
       activePresetId: presetId
     });
@@ -261,6 +379,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setMultiplier(1); // Reset multiplier
     setHighestStreak(0); // Reset highest streak
     setAccuracy(0); // Reset accuracy
+    setShowSummary(false); // Hide game summary
     
     // Stop any existing timer
     if (timerRef.current) {
@@ -302,6 +421,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       type: 'complete',
       message: `Game ended. Final score: ${score}`
     });
+    
+    // Show game summary
+    setTimeout(() => {
+      setShowSummary(true);
+    }, 1000);
     
     // Don't reset score and question count immediately
     // This allows the player to see their final stats
@@ -389,6 +513,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           time: responseTime
         });
         
+        // Play correct answer sound
+        playSound('correct');
+        
         // Check if we've reached the question limit
         if (newQuestionCount >= settings.questionCount) {
           // End of session
@@ -398,6 +525,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
               type: 'complete',
               message: `Training complete! Final score: ${score + pointsEarned}`
             });
+            
+            // Show game summary
+            setTimeout(() => {
+              setShowSummary(true);
+            }, 1500);
           } else {
             // Otherwise wait for the configured delay
             setTimeout(() => {
@@ -405,6 +537,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
                 type: 'complete',
                 message: `Training complete! Final score: ${score + pointsEarned}`
               });
+              
+              // Show game summary
+              setTimeout(() => {
+                setShowSummary(true);
+              }, 1500);
             }, settings.questionDelay);
           }
           return;
@@ -441,6 +578,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         timerRef.current = null;
       }
       
+      // Play life loss sound
+      playSound('lifeLoss');
+      
       if (newLives <= 0) {
         // Game over
         setIsRunning(false);
@@ -448,6 +588,14 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           type: 'gameover',
           message: `Game over! Final score: ${score}`
         });
+        
+        // Play game over sound
+        playSound('gameOver');
+        
+        // Show game summary after a short delay
+        setTimeout(() => {
+          setShowSummary(true);
+        }, 1500);
       } else {
         // Continue with same chord
         setFeedback({
@@ -490,55 +638,56 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       
       {/* Main content area */}
       <div className="main-content">
-        {/* Question display - always visible */}
-        <div className="question-display">
-          {currentChord ? currentChord.displayName : 'C#m'}
-        </div>
-        
-        {/* Timer - always visible */}
-        <Timer 
-          isRunning={isRunning} 
-          elapsedTime={elapsedTime} 
-          maxSeconds={settings.timerMaxSeconds} 
-          difficulty={settings.difficulty} 
-        />
-        
-        {/* Lives display - shows remaining lives */}
-        <LivesDisplay lives={lives} />
-        
-        {/* Score display - always visible */}
-        <div className="score-display">
-          <div className="score-item">
-            <div className="score-value">{score}</div>
-            <div className="score-label">Score</div>
-          </div>
-          <div className="score-item">
-            <div className="score-value">{questionCount}/{settings.questionCount}</div>
-            <div className="score-label">Progress</div>
-          </div>
-          <div className="score-item">
-            <div className="score-value">{elapsedTime > 0 ? (elapsedTime / 1000).toFixed(1) : '0.0'}s</div>
-            <div className="score-label">Time</div>
-          </div>
-        </div>
-        
-        {/* Controls - always visible */}
-        <div className="controls" style={{ marginTop: '1rem' }}>
-          {!isRunning ? (
-            <button onClick={startTraining}>Start Training</button>
-          ) : (
-            <>
-              <button onClick={skipQuestion} className="skip-button">Skip</button>
-              <button onClick={resetTraining} className="end-button">End Game</button>
-            </>
-          )}
-        </div>
-        
-        {/* Feedback message area - fixed height */}
-        <div className={`result-feedback ${feedback ? (feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : feedback.type === 'preset' ? 'result-preset' : 'result-incorrect') : ''}`}>
-          {feedback ? feedback.message : ''}
-          {/* Removed duplicate Start New Session button */}
-        </div>
+        {showSummary ? (
+          <GameSummary 
+            questionCount={questionCount}
+            settings={settings}
+            score={score}
+            accuracy={accuracy}
+            highestStreak={highestStreak}
+            onRestart={startTraining}
+          />
+        ) : (
+          <>
+            {/* Question display */}
+            <div className="question-display">
+              {currentChord ? currentChord.displayName : 'C#m'}
+            </div>
+            
+            {/* Timer */}
+            <Timer 
+              isRunning={isRunning} 
+              elapsedTime={elapsedTime} 
+              maxSeconds={settings.timerMaxSeconds} 
+              difficulty={settings.difficulty} 
+            />
+            
+            {/* Lives display */}
+            <LivesDisplay lives={lives} />
+            
+            {/* Score display */}
+            <div className="chord-trainer-score">
+              Score: {score}
+            </div>
+            
+            {/* Controls */}
+            <div className="controls" style={{ marginTop: '1rem' }}>
+              {!isRunning ? (
+                <button onClick={startTraining}>Start Training</button>
+              ) : (
+                <>
+                  <button onClick={skipQuestion} className="skip-button">Skip</button>
+                  <button onClick={resetTraining} className="end-button">End Game</button>
+                </>
+              )}
+            </div>
+            
+            {/* Feedback message area */}
+            <div className={`result-feedback ${feedback ? (feedback.type === 'correct' ? 'result-correct' : feedback.type === 'skipped' ? 'result-skipped' : feedback.type === 'preset' ? 'result-preset' : 'result-incorrect') : ''}`}>
+              {feedback ? feedback.message : ''}
+            </div>
+          </>
+        )}
         
         {/* Piano keyboard inside the main content area */}
         <div className="keyboard-wrapper">

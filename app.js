@@ -18,7 +18,10 @@ function App() {
   const [midiError, setMidiError] = useState(null);
   const [activeNotes, setActiveNotes] = useState(new Set());
   const [midiInputs, setMidiInputs] = useState([]);
-  const [selectedInput, setSelectedInput] = useState(null);
+  const [selectedInput, setSelectedInput] = useState(() => {
+    // Try to get the saved MIDI input from localStorage
+    return localStorage.getItem('selectedMidiInput');
+  });
   
   // Request MIDI access when component mounts
   useEffect(() => {
@@ -35,8 +38,13 @@ function App() {
           });
           setMidiInputs(inputs);
           
-          // Set to "All inputs" by default (null means listen to all inputs)
-          setSelectedInput(null);
+          // Use saved input or default to "All inputs" (null means listen to all inputs)
+          const savedInput = localStorage.getItem('selectedMidiInput');
+          if (savedInput && inputs.some(input => input.id === savedInput)) {
+            setSelectedInput(savedInput);
+          } else {
+            setSelectedInput(null);
+          }
         })
         .catch(err => {
           console.error('MIDI Access denied!', err);
@@ -90,24 +98,39 @@ function App() {
       };
     } 
     // Otherwise listen to just the selected input
-    else if (selectedInput) {
-      selectedInput.onmidimessage = handleMIDIMessage;
+    else if (selectedInput && midiAccess) {
+      // Find the input object by ID
+      let inputObj = null;
+      midiAccess.inputs.forEach(input => {
+        if (input.id === selectedInput) {
+          inputObj = input;
+        }
+      });
       
-      return () => {
-        selectedInput.onmidimessage = null;
-      };
+      // If we found the input, set up the listener
+      if (inputObj) {
+        inputObj.onmidimessage = handleMIDIMessage;
+        
+        return () => {
+          inputObj.onmidimessage = null;
+        };
+      }
     }
   }, [selectedInput, midiAccess]);
   
-  // Handle input device selection
-  const handleInputChange = (e) => {
-    const selectedId = e.target.value;
-    // If "all" is selected, set to null to listen to all inputs
-    if (selectedId === "all") {
-      setSelectedInput(null);
+  // Handle MIDI input selection change
+  const handleMidiInputChange = (e) => {
+    const inputId = e.target.value;
+    const newValue = inputId === "" ? null : inputId;
+    
+    // Update state
+    setSelectedInput(newValue);
+    
+    // Save to localStorage
+    if (newValue === null) {
+      localStorage.removeItem('selectedMidiInput');
     } else {
-      const input = midiInputs.find(input => input.id === selectedId);
-      setSelectedInput(input);
+      localStorage.setItem('selectedMidiInput', newValue);
     }
   };
 
@@ -119,7 +142,7 @@ function App() {
       >
         <ChordTrainer 
           activeNotes={activeNotes} 
-          midiStatus={{ midiAccess, midiError, midiInputs, selectedInput, handleInputChange }}
+          midiStatus={{ midiAccess, midiError, midiInputs, selectedInput, handleInputChange: handleMidiInputChange }}
         />
       </TrainerLayout>
     );
@@ -194,8 +217,14 @@ function MidiStatus({ midiAccess, midiError, midiInputs, selectedInput, handleIn
 }
 
 function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
-  // State for dark mode toggle
-  const [isDarkMode, setIsDarkMode] = React.useState(false);
+  // State for dark mode toggle with localStorage persistence
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    // Try to get the saved preference from localStorage
+    const savedDarkMode = localStorage.getItem('pianoKeyboardDarkMode');
+    // Return the parsed value if it exists, otherwise default to false
+    return savedDarkMode ? JSON.parse(savedDarkMode) : false;
+  });
+  
   // Generate keys for the specified octave range
   const keys = [];
   for (let octave = startOctave; octave <= endOctave; octave++) {
@@ -223,7 +252,11 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
   
   // Toggle dark mode function
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    const newDarkMode = !isDarkMode;
+    // Update state
+    setIsDarkMode(newDarkMode);
+    // Save to localStorage
+    localStorage.setItem('pianoKeyboardDarkMode', JSON.stringify(newDarkMode));
   };
   
   return (
