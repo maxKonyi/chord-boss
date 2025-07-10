@@ -15,8 +15,9 @@
 }
 
 body {
-  /* Removed background to allow app-container background to show through */
-  background: transparent;
+  /* Restored dark purple background */
+  background-color: #0c0a12;
+  background-image: linear-gradient(to bottom, #0f0c16, #0a080f);
   color: var(--text-primary);
   height: 100vh;
   display: flex;

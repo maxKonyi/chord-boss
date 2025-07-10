@@ -12,6 +12,7 @@
   --black-key-shadow: rgba(0, 0, 0, 0.5);
   --white-key-active-bg: linear-gradient(to bottom, #4cc9f0, #3a86ff);
   --black-key-active-bg: linear-gradient(to bottom, #4361ee, #3a0ca3);
+  --black-key-glow: rgba(67, 97, 238, 0.5);
 }
 
 /* Dark Mode Class */
@@ -23,9 +24,10 @@
   --black-key-bg: linear-gradient(to bottom, #111, #000);
   --black-key-text: #aaa;
   --black-key-shadow: rgba(0, 0, 0, 0.7);
-  /* Soothing purple/lavender colors for key-pressed states */
-  --white-key-active-bg: linear-gradient(to bottom, #9d4edd, #7b2cbf); /* Purple gradient */
-  --black-key-active-bg: linear-gradient(to bottom, #c77dff, #9d4edd); /* Lighter purple gradient */
+  /* Purple active colors that mimic light mode relationships */
+  --white-key-active-bg: linear-gradient(to bottom, #b892ff, #8c52ff); /* Lighter purple for white keys */
+  --black-key-active-bg: linear-gradient(to bottom, #7b2cbf, #5a189a); /* Darker purple for black keys */
+  --black-key-glow: rgba(140, 82, 255, 0.6); /* Purple glow to match the active colors */
 }
 
 .keyboard-container {
@@ -119,7 +121,7 @@
 .piano-key.black.active {
   background: var(--black-key-active-bg); /* Using CSS variables */
   transform: translateY(2px) scale(0.98); /* Enhanced press effect with slight scale */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px rgba(67, 97, 238, 0.5); /* Glow effect */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px var(--black-key-glow); /* Glow effect using CSS variable */
 }
 
 /* Add a subtle reflection effect to active keys */
