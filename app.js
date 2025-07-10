@@ -231,7 +231,7 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
               className={`piano-key white ${key.isActive ? 'active' : ''}`}
               style={{ width: `${whiteKeyWidth}%` }}
             >
-              <span className="key-label">{key.note}{key.octave}</span>
+              {key.note === 'C' && <span className="key-label">C{key.octave}</span>}
             </div>
           );
         })}
@@ -275,7 +275,7 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
               className={`piano-key black ${key.isActive ? 'active' : ''}`}
               style={{ left: `${(whiteKeysBefore - offset) * whiteKeyWidth}%` }}
             >
-              <span className="key-label">{key.note}{key.octave}</span>
+              {/* No labels for black keys */}
             </div>
           );
         })}
