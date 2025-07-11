@@ -19,21 +19,25 @@ function LivesDisplay({ lives }) {
 }
 
 // Game summary component
-function GameSummary({ questionCount, settings, score, accuracy, highestStreak, onRestart }) {
+function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart }) {
   // Load previous best streak from localStorage if available
   const previousBest = parseInt(localStorage.getItem('bestStreak') || '0');
   const isNewRecord = highestStreak > previousBest;
   
-  // Calculate gem rating based on score percentage and accuracy
-  // For perfect accuracy, we want to award 5 gems regardless of score
+  // Calculate gem rating purely from accuracy (simpler & deterministic)
   let gemCount;
-  if (accuracy === 100) {
-    gemCount = 5; // Perfect accuracy always gets 5 gems
+  if (accuracy === 100 && wrongNotesCount === 0) {
+    gemCount = 5; // Perfect play: 5 gems
+  } else if (accuracy >= 80) {
+    gemCount = 4; // 80–99%
+  } else if (accuracy >= 60) {
+    gemCount = 3; // 60–79%
+  } else if (accuracy >= 40) {
+    gemCount = 2; // 40–59%
+  } else if (accuracy >= 20) {
+    gemCount = 1; // 20–39%
   } else {
-    // For non-perfect runs, use a more realistic max score estimate
-    // Average of 6 points per question with average 2x multiplier
-    const estimatedMaxScore = questionCount * 6 * 2;
-    gemCount = window.ScoreGems.getGemCount(score, estimatedMaxScore);
+    gemCount = 0; // 0–19%
   }
   
   // Save new record if applicable
@@ -48,6 +52,7 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
       gemCount,
       accuracy,
       highestStreak,
+      wrongNotesCount,
       date: new Date().toISOString()
     };
     
@@ -58,7 +63,7 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
     // Store up to 10 most recent results
     localStorage.setItem('gameResults', 
       JSON.stringify(existingResults.slice(-10)));
-  }, [isNewRecord, highestStreak, score, gemCount, accuracy]);
+  }, [isNewRecord, highestStreak, score, gemCount, accuracy, wrongNotesCount]);
   
   return (
     <div className="game-summary">
@@ -71,6 +76,9 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
         <div className="summary-item">
           <div className="summary-value">{accuracy}%</div>
           <div className="summary-label">Accuracy</div>
+          {wrongNotesCount > 0 && (
+            <div className="summary-note">({wrongNotesCount} wrong notes)</div>
+          )}
         </div>
         <div className="summary-item">
           <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
@@ -181,6 +189,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState(null);
   const [questionCount, setQuestionCount] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0); // Track total attempts including mistakes
+  const [wrongNotesCount, setWrongNotesCount] = useState(0); // Track incorrect notes played
   // Total questions will come from settings
   
   // Game state variables
@@ -421,6 +431,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setMultiplier(1); // Reset multiplier
     setHighestStreak(0); // Reset highest streak
     setAccuracy(0); // Reset accuracy
+    setTotalAttempts(0); // Reset total attempts
+    setWrongNotesCount(0); // Reset wrong notes count
     setShowSummary(false); // Hide game summary
     
     // Stop any existing timer
@@ -493,6 +505,14 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       const playedNotesArray = Array.from(activeNotes);
       const isCorrect = MusicTheory.validateChord(playedNotesArray, currentChord);
       
+      // Track wrong notes when a chord is attempted but incorrect
+      if (!isCorrect) {
+        // Only count as a wrong note if they've played enough notes to potentially form the chord
+        setWrongNotesCount(prev => prev + 1);
+        // Play a subtle wrong note sound
+        playSound('wrong');
+      }
+      
       if (isCorrect) {
         // Stop timer
         if (timerRef.current) {
@@ -536,10 +556,16 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // Apply multiplier to points
         pointsEarned *= newMultiplier;
         
-        // Update accuracy
+        // Increment total attempts and update accuracy
+        setTotalAttempts(prev => prev + 1);
         const correctAnswers = questionCount + 1; // Current question is correct
-        const totalAttempts = correctAnswers; // For now, total attempts equals correct answers
-        const newAccuracy = Math.round((correctAnswers / totalAttempts) * 100);
+        const newTotalAttempts = totalAttempts + 1;
+        
+        // Calculate accuracy including wrong notes
+        // Formula: correctAnswers / (totalAttempts + wrongNotesCount * 0.5)
+        // This counts each wrong note as half an attempt, giving a more nuanced accuracy score
+        const effectiveAttempts = newTotalAttempts + wrongNotesCount * 0.5;
+        const newAccuracy = Math.round((correctAnswers / effectiveAttempts) * 100);
         setAccuracy(newAccuracy);
         
         // Update score and question count
@@ -610,6 +636,20 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       const newLives = lives - 1;
       setLives(newLives);
       
+      // Increment total attempts since this counts as a failed attempt
+      setTotalAttempts(prev => prev + 1);
+      
+      // Update accuracy calculation
+      const correctAnswers = questionCount;
+      const newTotalAttempts = totalAttempts + 1;
+      
+      // Calculate accuracy including wrong notes
+      // Formula: correctAnswers / (totalAttempts + wrongNotesCount * 0.5)
+      // This counts each wrong note as half an attempt, giving a more nuanced accuracy score
+      const effectiveAttempts = newTotalAttempts + wrongNotesCount * 0.5;
+      const newAccuracy = correctAnswers > 0 ? Math.round((correctAnswers / effectiveAttempts) * 100) : 0;
+      setAccuracy(newAccuracy);
+      
       // Reset streak and multiplier
       setStreak(0);
       setMultiplier(1);
@@ -655,7 +695,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         }, 100);
       }
     }
-  }, [isRunning, elapsedTime, settings.difficulty, lives, score]);
+  }, [isRunning, elapsedTime, settings.difficulty, lives, score, questionCount, totalAttempts]);
   
   // Clean up timer on unmount
   useEffect(() => {
@@ -674,8 +714,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       <Sidebar 
         settings={settings} 
         setSettings={setSettings} 
-        midiStatus={midiStatus} 
-        handleSelectPreset={handleSelectPreset} 
+        midiStatus={midiStatus}
+        handleSelectPreset={handleSelectPreset}
       />
       
       {/* Main content area */}
@@ -684,17 +724,18 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           <GameSummary 
             questionCount={questionCount}
             settings={settings}
-            score={score}
+            score={score} /* This is the final score after all questions */
             accuracy={accuracy}
             highestStreak={highestStreak}
+            wrongNotesCount={wrongNotesCount}
             onRestart={startTraining}
           />
         ) : (
-          <>
-            {/* Question display */}
-            <div className="question-display">
-              {currentChord ? currentChord.displayName : 'C#m'}
-            </div>
+      <>
+        {/* Question display */}
+        <div className="question-display">
+          {currentChord ? currentChord.displayName : 'C#m'}
+        </div>
             
             {/* Timer */}
             <Timer 
