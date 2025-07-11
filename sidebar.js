@@ -1,5 +1,5 @@
 // Import React hooks from the global React object
-const { useState } = React;
+const { useState, useEffect, useRef } = React;
 
 // Sidebar Component
 function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
@@ -32,7 +32,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
       
       <div className="settings-panel">
         {/* Preset Selector - Pop-out style */}
-        <div className="settings-group" style={{ marginBottom: '0.5rem' }}>
+        <div className="settings-group" style={{ marginBottom: '0.5rem', width: '100%' }}>
           <PresetSelector onSelectPreset={handleSelectPreset} />
         </div>
         
@@ -702,16 +702,30 @@ function PresetSelector({ onSelectPreset }) {
   const [expandedCollection, setExpandedCollection] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const popoutRef = useRef(null);
+  const buttonRef = useRef(null);
+  const [popoutPosition, setPopoutPosition] = useState({ top: 0, left: 0 });
   
   // Toggle collection expansion
   const toggleCollection = (collectionId) => {
     setExpandedCollection(expandedCollection === collectionId ? null : collectionId);
   };
   
+  // Update popout position when button position changes or when opening
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoutPosition({
+        top: rect.top,
+        left: rect.right + 5 // 5px offset from the button
+      });
+    }
+  }, [isOpen]);
+  
   // Close popout when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (popoutRef.current && !popoutRef.current.contains(event.target)) {
+      if (popoutRef.current && !popoutRef.current.contains(event.target) && 
+          buttonRef.current && !buttonRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     }
@@ -728,8 +742,9 @@ function PresetSelector({ onSelectPreset }) {
   }, [isOpen]);
   
   return (
-    <div className="preset-selector" style={{ position: 'relative' }}>
+    <div className="preset-selector" style={{ width: '100%' }}>
       <button 
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)} 
         style={{
           display: 'flex',
@@ -742,7 +757,8 @@ function PresetSelector({ onSelectPreset }) {
           color: 'white',
           border: '1px solid #444',
           borderRadius: '4px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          margin: '0 auto'
         }}
       >
         <span>Preset Progressions</span>
@@ -753,16 +769,15 @@ function PresetSelector({ onSelectPreset }) {
         <div 
           ref={popoutRef}
           style={{
-            position: 'absolute',
-            left: '100%',
-            top: '0',
+            position: 'fixed',
+            top: `${popoutPosition.top}px`,
+            left: `${popoutPosition.left}px`,
             width: '220px',
             backgroundColor: '#222',
             border: '1px solid #444',
             borderRadius: '4px',
             padding: '0.5rem',
-            zIndex: 100,
-            marginLeft: '5px',
+            zIndex: 1000,
             boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
           }}
         >
