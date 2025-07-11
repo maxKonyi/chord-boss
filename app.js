@@ -347,8 +347,12 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
 
 // Timer component for chord and scale trainers
 function Timer({ isRunning, elapsedTime, maxSeconds = 10, difficulty }) {
+  // Check if we're in practice mode (infinite time)
+  const isPractice = difficulty === 'practice';
+  
   // Calculate max time based on difficulty if provided
   const difficultyTimes = {
+    practice: Infinity, // Practice mode has infinite time
     easy: 12,
     medium: 6,
     hard: 3
@@ -358,6 +362,18 @@ function Timer({ isRunning, elapsedTime, maxSeconds = 10, difficulty }) {
   const actualMaxSeconds = difficulty ? (difficultyTimes[difficulty] || maxSeconds) : maxSeconds;
   const maxMs = actualMaxSeconds * 1000;
   
+  // For practice mode, always show empty timer bar in green
+  if (isPractice) {
+    return (
+      <div className="timer-container">
+        {isRunning && (
+          <div className="timer-progress timer-green" style={{ width: '0%' }} />
+        )}
+      </div>
+    );
+  }
+  
+  // Regular timer logic for non-practice modes
   // Calculate color based on elapsed time percentages
   const yellowThreshold = maxMs * 0.3; // 30% of max time
   const redThreshold = maxMs * 0.75;   // 75% of max time - turn red in last quarter

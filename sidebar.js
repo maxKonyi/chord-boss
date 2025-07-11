@@ -68,6 +68,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
               }}
               style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
             >
+              <option value="practice">Practice (∞)</option>
               <option value="easy">Easy (12s)</option>
               <option value="medium">Medium (6s)</option>
               <option value="hard">Hard (3s)</option>

@@ -19,25 +19,31 @@ function LivesDisplay({ lives }) {
 }
 
 // Game summary component
-function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart }) {
+function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart, totalAttempts }) {
+  // Check if we're in practice mode
+  const isPractice = isPracticeMode(settings.difficulty);
+  
   // Load previous best streak from localStorage if available
   const previousBest = parseInt(localStorage.getItem('bestStreak') || '0');
-  const isNewRecord = highestStreak > previousBest;
+  const isNewRecord = !isPractice && highestStreak > previousBest;
   
   // Calculate gem rating purely from accuracy (simpler & deterministic)
-  let gemCount;
-  if (accuracy === 100 && wrongNotesCount === 0) {
-    gemCount = 5; // Perfect play: 5 gems
-  } else if (accuracy >= 80) {
-    gemCount = 4; // 80–99%
-  } else if (accuracy >= 60) {
-    gemCount = 3; // 60–79%
-  } else if (accuracy >= 40) {
-    gemCount = 2; // 40–59%
-  } else if (accuracy >= 20) {
-    gemCount = 1; // 20–39%
-  } else {
-    gemCount = 0; // 0–19%
+  // Skip for practice mode
+  let gemCount = 0;
+  if (!isPractice) {
+    if (accuracy === 100 && wrongNotesCount === 0) {
+      gemCount = 5; // Perfect play: 5 gems
+    } else if (accuracy >= 80) {
+      gemCount = 4; // 80–99%
+    } else if (accuracy >= 60) {
+      gemCount = 3; // 60–79%
+    } else if (accuracy >= 40) {
+      gemCount = 2; // 40–59%
+    } else if (accuracy >= 20) {
+      gemCount = 1; // 20–39%
+    } else {
+      gemCount = 0; // 0–19%
+    }
   }
   
   // Save new record if applicable
@@ -70,41 +76,57 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
       <h3>Game Summary</h3>
       <div className="summary-stats">
         <div className="summary-item">
-          <div className="summary-value">{questionCount}</div>
-          <div className="summary-label">Chords Played</div>
+          <div className="summary-value">
+            {isPractice ? questionCount : settings.questionCount}
+          </div>
+          <div className="summary-label">Questions</div>
+        </div>
+        <div className="summary-item">
+          <div className="summary-value">
+            {settings.difficulty.charAt(0).toUpperCase() + settings.difficulty.slice(1)}
+          </div>
+          <div className="summary-label">Difficulty</div>
         </div>
         <div className="summary-item">
           <div className="summary-value">{accuracy}%</div>
           <div className="summary-label">Accuracy</div>
         </div>
-        <div className="summary-item">
-          <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
-            {highestStreak} {isNewRecord && '🏆'}
+        {/* Only show streak in non-practice mode */}
+        {!isPractice && (
+          <div className="summary-item">
+            <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
+              {highestStreak} {isNewRecord && '🏆'}
+            </div>
+            <div className="summary-label">
+              Highest Streak
+              {isNewRecord && previousBest > 0 && (
+                <div className="previous-best">(Previous: {previousBest})</div>
+              )}
+            </div>
           </div>
-          <div className="summary-label">
-            Highest Streak
-            {isNewRecord && previousBest > 0 && (
-              <div className="previous-best">(Previous: {previousBest})</div>
-            )}
+        )}
+        {/* Only show score in non-practice mode */}
+        {!isPractice && (
+          <div className="summary-item">
+            <div className="summary-value">{score}</div>
+            <div className="summary-label">Final Score</div>
           </div>
-        </div>
-        <div className="summary-item">
-          <div className="summary-value">{score}</div>
-          <div className="summary-label">Final Score</div>
-        </div>
+        )}
       </div>
       
-      {/* Gem Rating Display */}
-      <div className="summary-gems">
-        <div className="gem-row">
-          {[...Array(5)].map((_, i) => (
-            <svg key={i} className={`gem ${i < gemCount ? 'filled' : ''}`}>
-              <use href="#icon-gem" />
-            </svg>
-          ))}
+      {/* Gem Rating Display - hidden in Practice mode */}
+      {!isPractice && (
+        <div className="summary-gems">
+          <div className="gem-row">
+            {[...Array(5)].map((_, i) => (
+              <svg key={i} className={`gem ${i < gemCount ? 'filled' : ''}`}>
+                <use href="#icon-gem" />
+              </svg>
+            ))}
+          </div>
+          <div className="summary-gems-label">Performance Rating</div>
         </div>
-        <div className="summary-gems-label">Performance Rating</div>
-      </div>
+      )}
       
       <button className="restart-button" onClick={onRestart}>
         Play Again
@@ -116,11 +138,17 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
 // Helper function to get time in milliseconds based on difficulty
 function getDifficultyTime(difficulty) {
   switch(difficulty) {
+    case 'practice': return Infinity; // Practice mode has infinite time
     case 'easy': return 12;
     case 'hard': return 3;
     case 'medium':
     default: return 6;
   }
+}
+
+// Helper function to check if current difficulty is practice mode
+function isPracticeMode(difficulty) {
+  return difficulty === 'practice';
 }
 
 // Shared AudioContext for sound effects
@@ -642,6 +670,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   
   // Monitor timer completion
   useEffect(() => {
+    // In practice mode, we never timeout
+    if (isPracticeMode(settings.difficulty)) {
+      return;
+    }
+    
     if (isRunning && elapsedTime >= getDifficultyTime(settings.difficulty) * 1000) {
       // Timer is complete, lose a life
       const newLives = lives - 1;
@@ -735,10 +768,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           <GameSummary 
             questionCount={questionCount}
             settings={settings}
-            score={score} /* This is the final score after all questions */
+            score={score}
             accuracy={accuracy}
             highestStreak={highestStreak}
             wrongNotesCount={wrongNotesCount}
+            totalAttempts={totalAttempts}
             onRestart={startTraining}
           />
         ) : (
@@ -759,10 +793,12 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             {/* Lives display */}
             <LivesDisplay lives={lives} />
             
-            {/* Score display */}
-            <div className="chord-trainer-score">
-              Score: {score}
-            </div>
+            {/* Score display - hidden in Practice mode */}
+            {!isPracticeMode(settings.difficulty) && (
+              <div className="chord-trainer-score">
+                Score: {score}
+              </div>
+            )}
             
             {/* Controls */}
             <div className="controls" style={{ marginTop: '1rem' }}>
@@ -770,7 +806,10 @@ function ChordTrainer({ activeNotes, midiStatus }) {
                 <button onClick={startTraining}>Start Training</button>
               ) : (
                 <>
-                  <button onClick={skipQuestion} className="skip-button">Skip</button>
+                  {/* Skip button only shown in Practice mode */}
+                  {isPracticeMode(settings.difficulty) && (
+                    <button onClick={skipQuestion} className="skip-button">Skip</button>
+                  )}
                   <button onClick={resetTraining} className="end-button">End Game</button>
                 </>
               )}
