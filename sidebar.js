@@ -181,7 +181,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
               <input 
                 type="checkbox" 
-                checked={['major', 'minor', 'diminished', 'augmented'].every(type => 
+                checked={['major', 'minor', 'diminished', 'augmented', 'sus2', 'sus4'].every(type => 
                   settings.chordTypes.includes(type)
                 )}
                 onChange={e => {
