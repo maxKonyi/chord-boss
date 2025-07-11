@@ -515,7 +515,8 @@
 }
 
 .chord-family-header span:first-child {
-  display: none; /* hide accordion arrow */
+  /* Commented out to show chord family header text */
+  /* display: none; */ /* hide accordion arrow */
 }
 
 .chord-family-content {

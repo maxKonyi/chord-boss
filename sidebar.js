@@ -31,21 +31,21 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
       </div>
       
       <div className="settings-panel">
-        {/* Preset Selector */}
-        <div className="settings-group">
+        {/* Preset Selector - Pop-out style */}
+        <div className="settings-group" style={{ marginBottom: '0.5rem' }}>
           <PresetSelector onSelectPreset={handleSelectPreset} />
         </div>
         
-        {/* Session Settings - Moved to top */}
+        {/* Session Settings - Compact Layout */}
         <div className="settings-group">
-          <h4>Session</h4>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-            <label>
-            Questions: 
+          <h4 style={{ marginBottom: '0.25rem', fontSize: '0.9rem' }}>Session</h4>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
+            <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+            Q: 
             <select 
               value={settings.questionCount}
               onChange={e => setSettings({...settings, questionCount: parseInt(e.target.value)})}
-              style={{ marginLeft: '0.25rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
+              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -56,8 +56,8 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
           
           {/* Timer option removed as it's now controlled by difficulty */}
           
-          <label>
-            Difficulty: 
+          <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+            Diff: 
             <select 
               value={settings.difficulty}
               onChange={e => {
@@ -66,7 +66,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                 setSettings(newSettings);
                 localStorage.setItem('chordTrainerSettings', JSON.stringify(newSettings));
               }}
-              style={{ marginLeft: '0.25rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
+              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
             >
               <option value="easy">Easy (12s)</option>
               <option value="medium">Medium (6s)</option>
@@ -74,19 +74,19 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             </select>
           </label>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <label style={{ fontSize: '0.9rem' }}>
-              Delay: {(settings.questionDelay / 1000).toFixed(1)}s
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+            <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+              Delay: <span style={{ minWidth: '1.8rem', textAlign: 'right' }}>{(settings.questionDelay / 1000).toFixed(1)}s</span>
             </label>
             {/* Custom slider implementation */}
             <div 
               style={{
-                width: '80px',
+                width: '60px',
                 position: 'relative',
-                height: '10px',
+                height: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                marginTop: '20px'
+                margin: '0 0.1rem'
               }}
             >
               {/* Slider track */}
@@ -110,15 +110,15 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
               {/* Slider thumb */}
               <div
                 style={{
-                  width: '14px',
-                  height: '14px',
+                  width: '10px',
+                  height: '10px',
                   borderRadius: '50%',
-                  backgroundColor: '#4a90e2',
+                  backgroundColor: '#bb86fc', /* Purple to match theme */
                   position: 'absolute',
                   left: `${(settings.questionDelay / 3000) * 100}%`,
                   transform: 'translateX(-50%)',
                   cursor: 'pointer',
-                  boxShadow: '0 0 3px rgba(0,0,0,0.4)'
+                  boxShadow: '0 0 2px rgba(0,0,0,0.3)'
                 }}
                 onMouseDown={e => {
                   e.preventDefault();
@@ -158,26 +158,27 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
         </div>
       </div>
       
-      {/* Chord Types Selection */}
+      {/* Chord Types Selection - Compact Layout */}
       <div className="settings-group chord-selection">
-        <h4>
+        <h4 style={{ marginBottom: '0.25rem', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           Chord Types
           {settings.chordTypes.length > 0 && (
             <button 
               className="clear-all-btn" 
               onClick={() => setSettings({...settings, chordTypes: []})}
               title="Clear all selected chord types"
+              style={{ fontSize: '0.75rem', padding: '0.1rem 0.3rem' }}
             >
               Clear All
             </button>
           )}
         </h4>
         
-        {/* Triads Section */}
-        <div className="chord-family-accordion">
-          <div className="chord-family-header">
-            Triads
-            <label className="select-all-switch">
+        {/* Triads Section - Compact Layout */}
+        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
+          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Triads</span>
+            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
               <input 
                 type="checkbox" 
                 checked={['major', 'minor', 'diminished', 'augmented'].every(type => 
@@ -199,13 +200,14 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ margin: '0 0.2rem 0 0' }}
               />
-              <span className="select-all-label">Select All</span>
+              <span className="select-all-label">All</span>
             </label>
           </div>
           
-          <div id="triads-content" className="chord-family-content" style={{display: 'block'}}>
-            <div className="chord-type-toggles">
+          <div id="triads-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
+            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
               <button 
                 className={`chord-type-toggle ${settings.chordTypes.includes('major') ? 'active' : ''}`}
                 onClick={() => {
@@ -218,6 +220,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 Major
               </button>
@@ -234,6 +237,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 Minor
               </button>
@@ -250,8 +254,9 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
-                Diminished
+                Dim
               </button>
               
               <button 
@@ -266,8 +271,9 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
-                Augmented
+                Aug
               </button>
               
               <button 
@@ -282,6 +288,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 Sus2
               </button>
@@ -298,6 +305,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 Sus4
               </button>
@@ -305,11 +313,11 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
           </div>
         </div>
         
-        {/* 6th Chords Category */}
-        <div className="chord-family-accordion">
-          <div className="chord-family-header">
-            6th Chords
-            <label className="select-all-switch">
+        {/* 6th Chords Category - Compact Layout */}
+        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
+          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>6th Chords</span>
+            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
               <input
                 type="checkbox"
                 checked={['6','m6'].every(type => settings.chordTypes.includes(type))}
@@ -325,12 +333,13 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   }
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ margin: '0 0.2rem 0 0' }}
               />
-              <span className="select-all-label">Select All</span>
+              <span className="select-all-label">All</span>
             </label>
           </div>
-          <div id="sixths-content" className="chord-family-content" style={{display: 'block'}}>
-            <div className="chord-type-toggles">
+          <div id="sixths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
+            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
               {/* Major 6 */}
               <button
                 className={`chord-type-toggle ${settings.chordTypes.includes('6') ? 'active' : ''}`}
@@ -344,6 +353,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Major 3rd, Perfect 5th, Major 6th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 6
               </button>
@@ -360,6 +370,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Perfect 5th, Major 6th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 m6
               </button>
@@ -367,11 +378,11 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
           </div>
         </div>
 
-        {/* 7th Chords Section */}
-        <div className="chord-family-accordion">
-          <div className="chord-family-header">
-            7th Chords
-            <label className="select-all-switch">
+        {/* 7th Chords Section - Compact Layout */}
+        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
+          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>7th Chords</span>
+            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
               <input 
                 type="checkbox" 
                 checked={['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7'].every(type => 
@@ -393,13 +404,14 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ margin: '0 0.2rem 0 0' }}
               />
-              <span className="select-all-label">Select All</span>
+              <span className="select-all-label">All</span>
             </label>
           </div>
           
-          <div id="sevenths-content" className="chord-family-content" style={{display: 'block'}}>
-            <div className="chord-type-toggles">
+          <div id="sevenths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
+            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
               <button 
                 className={`chord-type-toggle ${settings.chordTypes.includes('major7') ? 'active' : ''}`}
                 onClick={() => {
@@ -413,6 +425,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Major 3rd, Perfect 5th, Major 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 maj7
               </button>
@@ -430,6 +443,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Major 3rd, Perfect 5th, Minor 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 7
               </button>
@@ -447,6 +461,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Perfect 5th, Minor 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 m7
               </button>
@@ -464,6 +479,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Diminished 5th, Diminished 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 dim7
               </button>
@@ -481,6 +497,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Diminished 5th, Minor 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 m7b5
               </button>
@@ -498,18 +515,19 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Perfect 5th, Major 7th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
-                m(maj7)
+                mM7
               </button>
             </div>
           </div>
         </div>
         
-        {/* 9th Chords Section */}
-        <div className="chord-family-accordion">
-          <div className="chord-family-header">
-            9th Chords
-            <label className="select-all-switch">
+        {/* 9th Chords Section - Compact Layout */}
+        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
+          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>9th Chords</span>
+            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
               <input 
                 type="checkbox" 
                 checked={['dominant9', 'major9', 'minor9', '6(9)', 'm6(9)'].every(type => 
@@ -531,13 +549,14 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   
                   setSettings({...settings, chordTypes: newTypes});
                 }}
+                style={{ margin: '0 0.2rem 0 0' }}
               />
-              <span className="select-all-label">Select All</span>
+              <span className="select-all-label">All</span>
             </label>
           </div>
           
-          <div id="ninths-content" className="chord-family-content" style={{display: 'block'}}>
-            <div className="chord-type-toggles">
+          <div id="ninths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
+            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
               <button 
                 className={`chord-type-toggle ${settings.chordTypes.includes('dominant9') ? 'active' : ''}`}
                 onClick={() => {
@@ -551,6 +570,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Major 3rd, Perfect 5th, Minor 7th, Major 9th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 9
               </button>
@@ -568,6 +588,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Major 3rd, Perfect 5th, Major 7th, Major 9th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 maj9
               </button>
@@ -585,6 +606,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Perfect 5th, Minor 7th, Major 9th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 m9
               </button>
@@ -602,8 +624,9 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Root, Minor 3rd, Perfect 5th, Major 7th, Major 9th"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
-                m(maj9)
+                mM9
               </button>
               {/* 6(9) */}
               <button 
@@ -618,6 +641,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Major 6 add 9"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 6(9)
               </button>
@@ -634,6 +658,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
                   setSettings({...settings, chordTypes: newTypes});
                 }}
                 title="Minor 6 add 9"
+                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
               >
                 m6(9)
               </button>
@@ -643,26 +668,28 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
       </div>
      </div> {/* Close settings-panel */}
       
-      <div className="settings-group">
-        <h4>Options</h4>
-        <div>
-          <label>
+      <div className="settings-group" style={{ marginTop: '0.3rem' }}>
+        <h4 style={{ fontSize: '0.9rem', margin: '0.2rem 0', padding: '0.2rem 0' }}>Options</h4>
+        <div style={{ fontSize: '0.85rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
             <input 
               type="checkbox" 
               checked={settings.allowInversions} 
               onChange={e => setSettings({...settings, allowInversions: e.target.checked})}
+              style={{ margin: '0 0.3rem 0 0' }}
             />
             Include Inversions
           </label>
         </div>
-        <div style={{ marginTop: '0.5rem' }}>
-          <label>
+        <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
             <input
               type="checkbox"
               checked={settings.optionalFifth}
               onChange={e => setSettings({ ...settings, optionalFifth: e.target.checked })}
+              style={{ margin: '0 0.3rem 0 0' }}
             />
-            Make Perfect 5th Optional for 7th chords and larger
+            Make 5th Optional for 7th+ chords
           </label>
         </div>
       </div>
@@ -673,44 +700,123 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
 // Preset Selector Component
 function PresetSelector({ onSelectPreset }) {
   const [expandedCollection, setExpandedCollection] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const popoutRef = useRef(null);
   
   // Toggle collection expansion
   const toggleCollection = (collectionId) => {
     setExpandedCollection(expandedCollection === collectionId ? null : collectionId);
   };
   
+  // Close popout when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (popoutRef.current && !popoutRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+  
   return (
-    <div className="preset-selector">
-      <h4>Preset Progressions</h4>
+    <div className="preset-selector" style={{ position: 'relative' }}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)} 
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '0.3rem 0.5rem',
+          fontSize: '0.85rem',
+          backgroundColor: '#333',
+          color: 'white',
+          border: '1px solid #444',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}
+      >
+        <span>Preset Progressions</span>
+        <span>{isOpen ? '▼' : '►'}</span>
+      </button>
       
-      {Presets.COLLECTIONS.map(collection => (
-        <div key={collection.id} className="preset-collection">
-          <div 
-            className="preset-collection-header" 
-            onClick={() => toggleCollection(collection.id)}
-          >
-            {collection.name}
-            <span className="expand-icon">
-              {expandedCollection === collection.id ? '▼' : '►'}
-            </span>
-          </div>
+      {isOpen && (
+        <div 
+          ref={popoutRef}
+          style={{
+            position: 'absolute',
+            left: '100%',
+            top: '0',
+            width: '220px',
+            backgroundColor: '#222',
+            border: '1px solid #444',
+            borderRadius: '4px',
+            padding: '0.5rem',
+            zIndex: 100,
+            marginLeft: '5px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>Preset Progressions</h4>
           
-          {expandedCollection === collection.id && (
-            <div className="preset-list">
-              {collection.presets.map(preset => (
-                <div 
-                  key={preset.id} 
-                  className="preset-item"
-                  onClick={() => onSelectPreset(preset.id)}
-                >
-                  <div className="preset-name">{preset.name}</div>
-                  <div className="preset-description">{preset.description}</div>
+          {Presets.COLLECTIONS.map(collection => (
+            <div key={collection.id} className="preset-collection" style={{ marginBottom: '0.5rem' }}>
+              <div 
+                className="preset-collection-header" 
+                onClick={() => toggleCollection(collection.id)}
+                style={{
+                  padding: '0.25rem',
+                  backgroundColor: '#333',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '0.85rem'
+                }}
+              >
+                {collection.name}
+                <span className="expand-icon">
+                  {expandedCollection === collection.id ? '▼' : '►'}
+                </span>
+              </div>
+              
+              {expandedCollection === collection.id && (
+                <div className="preset-list" style={{ marginTop: '0.25rem' }}>
+                  {collection.presets.map(preset => (
+                    <div 
+                      key={preset.id} 
+                      className="preset-item"
+                      onClick={() => {
+                        onSelectPreset(preset.id);
+                        setIsOpen(false); // Close after selection
+                      }}
+                      style={{
+                        padding: '0.25rem',
+                        cursor: 'pointer',
+                        borderRadius: '3px',
+                        marginBottom: '0.25rem',
+                        ':hover': { backgroundColor: '#444' }
+                      }}
+                    >
+                      <div className="preset-name" style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{preset.name}</div>
+                      <div className="preset-description" style={{ fontSize: '0.75rem', color: '#aaa' }}>{preset.description}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
