@@ -77,7 +77,7 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
           <div className="summary-value">{accuracy}%</div>
           <div className="summary-label">Accuracy</div>
           {wrongNotesCount > 0 && (
-            <div className="summary-note">({wrongNotesCount} wrong notes)</div>
+            <div className="summary-note">({wrongNotesCount} wrong attempts)</div>
           )}
         </div>
         <div className="summary-item">
@@ -191,6 +191,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [questionCount, setQuestionCount] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0); // Track total attempts including mistakes
   const [wrongNotesCount, setWrongNotesCount] = useState(0); // Track incorrect notes played
+  const [lastWrongAttemptSignature, setLastWrongAttemptSignature] = useState(null);
   // Total questions will come from settings
   
   // Game state variables
@@ -246,6 +247,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   
   // Skip the current question and move to the next one
   const skipQuestion = () => {
+    setLastWrongAttemptSignature(null);
     // Stop timer
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -410,6 +412,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     const now = Date.now();
     setStartTime(now);
     setFeedback(null);
+    setLastWrongAttemptSignature(null);
     
     // Start a new timer
     timerRef.current = setInterval(() => {
@@ -433,6 +436,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setAccuracy(0); // Reset accuracy
     setTotalAttempts(0); // Reset total attempts
     setWrongNotesCount(0); // Reset wrong notes count
+    setLastWrongAttemptSignature(null);
     setShowSummary(false); // Hide game summary
     
     // Stop any existing timer
@@ -450,6 +454,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   
   // Reset everything and end the current game
   const resetTraining = () => {
+    setLastWrongAttemptSignature(null);
     // Stop the timer if it's running
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -505,15 +510,24 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       const playedNotesArray = Array.from(activeNotes);
       const isCorrect = MusicTheory.validateChord(playedNotesArray, currentChord);
       
-      // Track wrong notes when a chord is attempted but incorrect
+      // Track wrong attempts when an incorrect full chord is played
       if (!isCorrect) {
-        // Only count as a wrong note if they've played enough notes to potentially form the chord
-        setWrongNotesCount(prev => prev + 1);
-        // Play a subtle wrong note sound
-        playSound('wrong');
+        // Create a canonical signature of the currently pressed notes
+        const signature = playedNotesArray.sort((a,b)=>a-b).join('-');
+        // Only penalise if this signature hasn't already been counted for this question
+        if (signature !== lastWrongAttemptSignature) {
+          setWrongNotesCount(prev => prev + 1);
+          setLastWrongAttemptSignature(signature);
+          // Reset streak and multiplier on wrong attempt
+          setStreak(0);
+          setMultiplier(1);
+          playSound('wrong');
+        }
       }
       
       if (isCorrect) {
+        // Reset wrong attempt tracker for next question
+        setLastWrongAttemptSignature(null);
         // Stop timer
         if (timerRef.current) {
           clearInterval(timerRef.current);
