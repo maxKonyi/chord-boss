@@ -24,12 +24,41 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
   const previousBest = parseInt(localStorage.getItem('bestStreak') || '0');
   const isNewRecord = highestStreak > previousBest;
   
+  // Calculate gem rating based on score percentage and accuracy
+  // For perfect accuracy, we want to award 5 gems regardless of score
+  let gemCount;
+  if (accuracy === 100) {
+    gemCount = 5; // Perfect accuracy always gets 5 gems
+  } else {
+    // For non-perfect runs, use a more realistic max score estimate
+    // Average of 6 points per question with average 2x multiplier
+    const estimatedMaxScore = questionCount * 6 * 2;
+    gemCount = window.ScoreGems.getGemCount(score, estimatedMaxScore);
+  }
+  
   // Save new record if applicable
   useEffect(() => {
     if (isNewRecord && highestStreak > 0) {
       localStorage.setItem('bestStreak', highestStreak.toString());
     }
-  }, [isNewRecord, highestStreak]);
+    
+    // Store gem rating in localStorage
+    const gameResults = {
+      score,
+      gemCount,
+      accuracy,
+      highestStreak,
+      date: new Date().toISOString()
+    };
+    
+    // Get existing results or initialize empty array
+    const existingResults = JSON.parse(localStorage.getItem('gameResults') || '[]');
+    existingResults.push(gameResults);
+    
+    // Store up to 10 most recent results
+    localStorage.setItem('gameResults', 
+      JSON.stringify(existingResults.slice(-10)));
+  }, [isNewRecord, highestStreak, score, gemCount, accuracy]);
   
   return (
     <div className="game-summary">
@@ -59,6 +88,19 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
           <div className="summary-label">Final Score</div>
         </div>
       </div>
+      
+      {/* Gem Rating Display */}
+      <div className="summary-gems">
+        <div className="gem-row">
+          {[...Array(5)].map((_, i) => (
+            <svg key={i} className={`gem ${i < gemCount ? 'filled' : ''}`}>
+              <use href="#icon-gem" />
+            </svg>
+          ))}
+        </div>
+        <div className="summary-gems-label">Performance Rating</div>
+      </div>
+      
       <button className="restart-button" onClick={onRestart}>
         Play Again
       </button>
