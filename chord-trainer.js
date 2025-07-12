@@ -19,9 +19,9 @@ function LivesDisplay({ lives }) {
 }
 
 // Game summary component
-function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart, totalAttempts }) {
-  // Check if we're in practice mode
-  const isPractice = isPracticeMode(settings.difficulty);
+function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart, totalAttempts, difficulty }) {
+  // Check if we're in practice mode using the passed difficulty parameter
+  const isPractice = isPracticeMode(difficulty || settings.difficulty);
   
   // Load previous best streak from localStorage if available
   const previousBest = parseInt(localStorage.getItem('bestStreak') || '0');
@@ -83,7 +83,7 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
         </div>
         <div className="summary-item">
           <div className="summary-value">
-            {settings.difficulty.charAt(0).toUpperCase() + settings.difficulty.slice(1)}
+            {(difficulty || settings.difficulty).charAt(0).toUpperCase() + (difficulty || settings.difficulty).slice(1)}
           </div>
           <div className="summary-label">Difficulty</div>
         </div>
@@ -226,6 +226,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [highestStreak, setHighestStreak] = useState(0); // Track highest streak
   const [accuracy, setAccuracy] = useState(0);     // Percentage of correct answers
   const [showSummary, setShowSummary] = useState(false); // Whether to show the game summary
+  const [gameDifficulty, setGameDifficulty] = useState(null); // Store the game difficulty
   
   // Settings for chord generation with localStorage persistence
   const [settings, setSettings] = useState(() => {
@@ -463,6 +464,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setWrongNotesCount(0); // Reset wrong notes count
     setLastWrongAttemptSignature(null);
     setShowSummary(false); // Hide game summary
+    setGameDifficulty(settings.difficulty); // Store difficulty for this game
     
     // Stop any existing timer
     if (timerRef.current) {
@@ -718,8 +720,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // Play game over sound
         playSound('gameOver');
         
-        // Show game summary after a short delay
+        // Store current difficulty and show game summary after a short delay
         setTimeout(() => {
+          setGameDifficulty(settings.difficulty);
           setShowSummary(true);
         }, 1500);
       } else {
@@ -773,6 +776,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             highestStreak={highestStreak}
             wrongNotesCount={wrongNotesCount}
             totalAttempts={totalAttempts}
+            difficulty={gameDifficulty}
             onRestart={startTraining}
           />
         ) : (
