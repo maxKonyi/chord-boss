@@ -10,11 +10,11 @@ function HelpModal({ isOpen, onClose }) {
     <div className="help-modal-overlay" onClick={onClose}>
       <div className="help-modal-content" onClick={e => e.stopPropagation()}>
         <button className="help-close-btn" onClick={onClose}>×</button>
-        <h3>How to Use Composer Piano</h3>
+        <h3>How to Use Chord Boss</h3>
         
         <div className="help-section">
           <h4>Getting Started</h4>
-          <p>Welcome to Composer Piano, a tool to help you learn and practice piano chords!</p>
+          <p>Welcome to Chord Boss, a tool to help you learn and practice piano chords!</p>
           <p>To begin, make sure your MIDI keyboard is connected. Then either:</p>
           <ul>
             <li>Select a preset from the dropdown menu, or</li>
