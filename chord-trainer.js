@@ -151,56 +151,27 @@ function isPracticeMode(difficulty) {
   return difficulty === 'practice';
 }
 
-// Shared AudioContext for sound effects
-let sharedAudioContext = null;
-
 // Sound effect function
 const playSound = (type) => {
-  // Create AudioContext if it doesn't exist
-  if (!sharedAudioContext) {
-    sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  // Sound file mapping
+  const soundFiles = {
+    'correct': 'sounds/correct.wav',
+    'lifeLoss': 'sounds/life-loss.wav',
+    'gameOver': 'sounds/game-over.wav'
+    // Add more sound mappings here as needed
+  };
   
-  const oscillator = sharedAudioContext.createOscillator();
-  const gainNode = sharedAudioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(sharedAudioContext.destination);
-  
-  switch(type) {
-    case 'correct':
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 880; // A5
-      gainNode.gain.value = 0.1;
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 0.5);
-      oscillator.stop(sharedAudioContext.currentTime + 0.5);
-      break;
-    case 'lifeLoss':
-      oscillator.type = 'sine';
-      oscillator.frequency.value = 220; // A3
-      gainNode.gain.value = 0.2;
-      oscillator.start();
-      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 0.7);
-      oscillator.stop(sharedAudioContext.currentTime + 0.7);
-      break;
-    case 'gameOver':
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.value = 220; // A3
-      gainNode.gain.value = 0.15;
-      oscillator.start();
-      
-      // Descending pitch for game over
-      setTimeout(() => {
-        oscillator.frequency.value = 165; // E3
-      }, 200);
-      setTimeout(() => {
-        oscillator.frequency.value = 110; // A2
-      }, 400);
-      
-      gainNode.gain.exponentialRampToValueAtTime(0.001, sharedAudioContext.currentTime + 1.0);
-      oscillator.stop(sharedAudioContext.currentTime + 1.0);
-      break;
+  // Check if we have a sound file for this type
+  if (soundFiles[type]) {
+    // Create audio element
+    const audio = new Audio(soundFiles[type]);
+    
+    // Play the sound
+    audio.play().catch(error => {
+      console.error('Error playing sound:', error);
+    });
+  } else {
+    console.warn(`No sound file defined for type: ${type}`);
   }
 };
 
