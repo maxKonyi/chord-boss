@@ -272,6 +272,16 @@ Presets.applyPreset = function(presetId, currentSettings) {
   }
   
   // Create a new settings object by merging the preset settings with current settings
-  // This ensures any future settings we add won't break existing presets
-  return { ...currentSettings, ...preset.settings };
+  const mergedSettings = { ...currentSettings, ...preset.settings };
+  
+  // Set inversionMode based on allowInversions from the preset
+  if (preset.settings.hasOwnProperty('allowInversions')) {
+    if (preset.settings.allowInversions) {
+      mergedSettings.inversionMode = 'inversions';
+    } else {
+      mergedSettings.inversionMode = 'root';
+    }
+  }
+  
+  return mergedSettings;
 };

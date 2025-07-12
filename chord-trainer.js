@@ -210,6 +210,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     const defaultSettings = {
       chordTypes: ['major', 'minor'], // Start with just major and minor triads
       allowInversions: false,
+      inversionMode: 'root', // 'root', 'inversions', or 'free'
       // Empty array means use all valid note names with equal sharp/flat probability
       rootNotes: [],
       octave: 4,
@@ -345,14 +346,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   
   // Generate a new chord question
   const generateNewQuestion = useCallback(() => {
-    // Check if we've already reached the question limit
-    if (questionCount >= settings.questionCount) {
-      // End of session
-      setIsRunning(false);
-      setFeedback({
-        type: 'complete',
-        message: `Training complete! Final score: ${score}`
-      });
+    if (!settings || questionCount >= settings.questionCount) {
       return;
     }
     
@@ -382,7 +376,35 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       
       // Make sure we have a valid chord before setting properties
       if (newChord) {
-        newChord.checkInversion = safeSettings.allowInversions;
+        // Determine if we should check inversions based on the inversion mode
+        let checkInversion = false;
+        
+        switch(settings.inversionMode) {
+          case 'root':
+            // Root position only - don't check specific inversion, but require root position
+            checkInversion = false;
+            break;
+          case 'inversions':
+            // Specific inversions - check for the exact inversion
+            checkInversion = true;
+            // Make sure allowInversions is true when in 'inversions' mode
+            if (!settings.allowInversions) {
+              safeSettings.allowInversions = true;
+            }
+            break;
+          case 'free':
+            // Any inversion is acceptable, but generate in root position
+            checkInversion = false;
+            // Make sure allowInversions is false to generate root position chords
+            safeSettings.allowInversions = false;
+            break;
+          default:
+            // Default to root position
+            checkInversion = false;
+        }
+        
+        newChord.checkInversion = checkInversion;
+        newChord.inversionMode = settings.inversionMode;
         newChord.optionalFifth = safeSettings.optionalFifth;
         setCurrentChord(newChord);
       } else {
@@ -390,7 +412,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         console.warn('Failed to generate chord, trying with default settings');
         const defaultChord = MusicTheory.generateChord('C', 'major', 'root', 4);
         if (defaultChord) {
-          defaultChord.checkInversion = safeSettings.allowInversions;
+          defaultChord.checkInversion = false;
+          defaultChord.inversionMode = settings.inversionMode || 'root';
           defaultChord.optionalFifth = safeSettings.optionalFifth;
           setCurrentChord(defaultChord);
         }
@@ -400,7 +423,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       console.error('Error generating chord:', error);
       const defaultChord = MusicTheory.generateChord('C', 'major', 'root', 4);
       if (defaultChord) {
-        defaultChord.checkInversion = safeSettings.allowInversions;
+        defaultChord.checkInversion = false;
+        defaultChord.inversionMode = settings.inversionMode || 'root';
         defaultChord.optionalFifth = safeSettings.optionalFifth;
         setCurrentChord(defaultChord);
       }

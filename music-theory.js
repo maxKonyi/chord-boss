@@ -658,8 +658,48 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
     rootPc = toPc(expectedChord.root);
   }
 
+  // If in free mode, just check if all the right notes are played (ignoring inversion)
+  if (expectedChord.inversionMode === 'free') {
+    // Convert played notes to a Set of pitch classes (0-11)
+    const playedPitchClasses = new Set();
+    playedNotes.forEach(midi => {
+      playedPitchClasses.add(midi % 12);
+    });
+    
+    // Convert expected notes to a Set of pitch classes
+    const expectedPitchClasses = new Set();
+    expectedChord.midiNotes.forEach(midi => {
+      expectedPitchClasses.add(midi % 12);
+    });
+
+    // Calculate perfect 5th pitch class if applicable and remove from required set when optional
+    let perfect5thPc = null;
+    if (optionalFifthFlag && rootPc !== null && rootPc >= 0 && expectedChord.midiNotes.length >= 4) {
+      perfect5thPc = (rootPc + 7) % 12;
+      if (expectedPitchClasses.has(perfect5thPc)) {
+        expectedPitchClasses.delete(perfect5thPc);
+      }
+    }
+
+    // Ensure all required notes are played
+    for (const pc of expectedPitchClasses) {
+      if (!playedPitchClasses.has(pc)) {
+        return false;
+      }
+    }
+
+    // Disallow extra notes except the optional perfect 5th (if flag on)
+    for (const pc of playedPitchClasses) {
+      if (!expectedPitchClasses.has(pc)) {
+        if (!(optionalFifthFlag && pc === perfect5thPc)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
   // If inversions are not being checked, require root position
-  if (!expectedChord.checkInversion) {
+  else if (!expectedChord.checkInversion) {
     // Find the lowest played note (bass note)
     const lowestPlayedNote = Math.min(...playedNotes);
     const lowestPlayedPitchClass = lowestPlayedNote % 12;

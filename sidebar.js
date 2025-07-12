@@ -75,6 +75,33 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             </select>
           </label>
           
+          {/* Inversion Mode Selector */}
+          <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
+            Inv: 
+            <select 
+              value={settings.inversionMode}
+              onChange={e => {
+                // Update inversion mode and ensure localStorage is updated
+                const newSettings = {
+                  ...settings, 
+                  inversionMode: e.target.value,
+                  // If switching to 'inversions' mode, ensure allowInversions is true
+                  // If switching to 'free' mode, ensure allowInversions is false
+                  allowInversions: e.target.value === 'inversions' ? true : 
+                                  e.target.value === 'free' ? false : 
+                                  settings.allowInversions
+                };
+                setSettings(newSettings);
+                localStorage.setItem('chordTrainerSettings', JSON.stringify(newSettings));
+              }}
+              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
+            >
+              <option value="root">No</option>
+              <option value="inversions">Yes</option>
+              <option value="free">Free</option>
+            </select>
+          </label>
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
             <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
               Delay: <span style={{ minWidth: '1.8rem', textAlign: 'right' }}>{(settings.questionDelay / 1000).toFixed(1)}s</span>
@@ -671,17 +698,7 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
       
       <div className="settings-group" style={{ marginTop: '0.3rem' }}>
         <h4 style={{ fontSize: '0.9rem', margin: '0.2rem 0', padding: '0.2rem 0' }}>Options</h4>
-        <div style={{ fontSize: '0.85rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input 
-              type="checkbox" 
-              checked={settings.allowInversions} 
-              onChange={e => setSettings({...settings, allowInversions: e.target.checked})}
-              style={{ margin: '0 0.3rem 0 0' }}
-            />
-            Include Inversions
-          </label>
-        </div>
+        {/* Inversion checkbox removed - replaced by inversion mode selector */}
         <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
           <label style={{ display: 'flex', alignItems: 'center' }}>
             <input
