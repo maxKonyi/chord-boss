@@ -152,7 +152,12 @@ function isPracticeMode(difficulty) {
 }
 
 // Sound effect function
-const playSound = (type) => {
+const playSound = (type, settings) => {
+  // If audio is muted, don't play any sounds
+  if (settings && settings.muteAudio) {
+    return;
+  }
+  
   // Sound file mapping
   const soundFiles = {
     'correct': 'sounds/correct.wav',
@@ -550,7 +555,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           // Reset streak and multiplier on wrong attempt
           setStreak(0);
           setMultiplier(1);
-          playSound('wrong');
+          playSound('wrong', settings);
         }
         // Reset processing flag after a short delay for wrong answers
         setTimeout(() => {
@@ -629,7 +634,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         });
         
         // Play correct answer sound
-        playSound('correct');
+        playSound('correct', settings);
         
         // Check if we've reached the question limit
         if (newQuestionCount >= settings.questionCount) {
@@ -642,7 +647,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             });
             
             // Play game over sound
-            playSound('gameOver');
+            playSound('gameOver', settings);
             
             // Show game summary
             setTimeout(() => {
@@ -657,7 +662,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
               });
               
               // Play game over sound
-              playSound('gameOver');
+              playSound('gameOver', settings);
               
               // Show game summary
               setTimeout(() => {
@@ -724,7 +729,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       }
       
       // Play life loss sound
-      playSound('lifeLoss');
+      playSound('lifeLoss', settings);
       
       if (newLives <= 0) {
         // Game over
@@ -735,7 +740,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         });
         
         // Play game over sound
-        playSound('gameOver');
+        playSound('gameOver', settings);
         
         // Store current difficulty and show game summary after a short delay
         setTimeout(() => {

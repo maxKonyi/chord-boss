@@ -710,6 +710,17 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
             Make 5th Optional for 7th+ chords
           </label>
         </div>
+        <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center' }}>
+            <input
+              type="checkbox"
+              checked={settings.muteAudio || false}
+              onChange={e => setSettings({ ...settings, muteAudio: e.target.checked })}
+              style={{ margin: '0 0.3rem 0 0' }}
+            />
+            Mute audio
+          </label>
+        </div>
       </div>
     </div>
   );
