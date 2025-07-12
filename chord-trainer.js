@@ -156,6 +156,7 @@ const playSound = (type) => {
   // Sound file mapping
   const soundFiles = {
     'correct': 'sounds/correct.wav',
+    'wrong': 'sounds/wrong.wav',
     'lifeLoss': 'sounds/life-loss.wav',
     'gameOver': 'sounds/game-over.wav'
     // Add more sound mappings here as needed
@@ -526,6 +527,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           setStreak(0);
           setMultiplier(1);
           playSound('wrong');
+          
+          // Reset processing flag after a short delay for wrong answers too
+          setTimeout(() => {
+            setIsProcessingChord(false);
+          }, 500);
         }
       }
       
