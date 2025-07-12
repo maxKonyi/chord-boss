@@ -612,6 +612,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
               message: `Training complete! Final score: ${score + pointsEarned}`
             });
             
+            // Play game over sound
+            playSound('gameOver');
+            
             // Show game summary
             setTimeout(() => {
               setShowSummary(true);
@@ -623,6 +626,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
                 type: 'complete',
                 message: `Training complete! Final score: ${score + pointsEarned}`
               });
+              
+              // Play game over sound
+              playSound('gameOver');
               
               // Show game summary
               setTimeout(() => {
