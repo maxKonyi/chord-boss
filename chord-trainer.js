@@ -439,6 +439,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setIsProcessingChord(false); // Reset processing flag when generating a new question
     const now = Date.now();
     setStartTime(now);
+    setElapsedTime(0); // Explicitly reset elapsed time to 0 for immediate timer bar reset
     setFeedback(null);
     setLastWrongAttemptSignature(null);
     

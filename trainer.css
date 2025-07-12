@@ -75,6 +75,11 @@
   transition: width 0.1s linear;
 }
 
+/* Class for instant timer resets with no transition */
+.timer-no-transition {
+  transition: none !important;
+}
+
 .timer-green {
   background: linear-gradient(to right, #7e57c2, #5e35b1);
   box-shadow: 0 0 5px rgba(126, 87, 194, 0.5);

@@ -347,6 +347,8 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
 
 // Timer component for chord and scale trainers
 function Timer({ isRunning, elapsedTime, maxSeconds = 10, difficulty }) {
+  // Detect when timer is at zero to disable transition
+  const noTransition = elapsedTime === 0;
   // Check if we're in practice mode (infinite time)
   const isPractice = difficulty === 'practice';
   
@@ -392,7 +394,7 @@ function Timer({ isRunning, elapsedTime, maxSeconds = 10, difficulty }) {
     <div className="timer-container">
       {isRunning && (
         <div 
-          className={`timer-progress ${timerClass}`} 
+          className={`timer-progress ${timerClass} ${noTransition ? 'timer-no-transition' : ''}`} 
           style={{ width: `${widthPercentage}%` }}
         />
       )}
