@@ -551,12 +551,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           setStreak(0);
           setMultiplier(1);
           playSound('wrong');
-          
-          // Reset processing flag after a short delay for wrong answers too
-          setTimeout(() => {
-            setIsProcessingChord(false);
-          }, 500);
         }
+        // Reset processing flag after a short delay for wrong answers
+        setTimeout(() => {
+          setIsProcessingChord(false);
+        }, 500);
       }
       
       if (isCorrect) {
