@@ -19,7 +19,7 @@ function LivesDisplay({ lives }) {
 }
 
 // Game summary component
-function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, onRestart, totalAttempts, difficulty }) {
+function GameSummary({ questionCount, settings, score, accuracy, highestStreak, wrongNotesCount, totalAttempts, difficulty, failedChordName, onRestart }) {
   // Check if we're in practice mode using the passed difficulty parameter
   const isPractice = isPracticeMode(difficulty || settings.difficulty);
   
@@ -74,63 +74,89 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
   return (
     <div className="game-summary">
       <h3>Game Summary</h3>
-      <div className="summary-stats">
+      
+      {/* Failed Chord - Prominently displayed at the top if present */}
+      {!isPractice && failedChordName && (
+        <div className="failed-chord-display">
+          <div className="failed-chord-value">{failedChordName}</div>
+          <div className="failed-chord-label">Failed Chord</div>
+        </div>
+      )}
+      
+      {/* Row 1: Questions and Difficulty */}
+      <div className="summary-row">
         <div className="summary-item">
           <div className="summary-value">
             {isPractice ? questionCount : settings.questionCount}
           </div>
           <div className="summary-label">Questions</div>
         </div>
+        
+        <div className="summary-divider">|</div>
+        
         <div className="summary-item">
           <div className="summary-value">
             {(difficulty || settings.difficulty).charAt(0).toUpperCase() + (difficulty || settings.difficulty).slice(1)}
           </div>
           <div className="summary-label">Difficulty</div>
         </div>
+      </div>
+      
+      {/* Row 2: Accuracy, Score, and Streak */}
+      <div className="summary-row">
         <div className="summary-item">
           <div className="summary-value">{accuracy}%</div>
           <div className="summary-label">Accuracy</div>
         </div>
-        {/* Only show streak in non-practice mode */}
-        {!isPractice && (
-          <div className="summary-item">
-            <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
-              {highestStreak} {isNewRecord && '🏆'}
-            </div>
-            <div className="summary-label">
-              Highest Streak
-              {isNewRecord && previousBest > 0 && (
-                <div className="previous-best">(Previous: {previousBest})</div>
-              )}
-            </div>
-          </div>
-        )}
+        
         {/* Only show score in non-practice mode */}
         {!isPractice && (
-          <div className="summary-item">
-            <div className="summary-value">{score}</div>
-            <div className="summary-label">Final Score</div>
-          </div>
+          <>
+            <div className="summary-divider">|</div>
+            <div className="summary-item">
+              <div className="summary-value">{score}</div>
+              <div className="summary-label">Final Score</div>
+            </div>
+          </>
+        )}
+        
+        {/* Only show streak in non-practice mode */}
+        {!isPractice && (
+          <>
+            <div className="summary-divider">|</div>
+            <div className="summary-item">
+              <div className={`summary-value ${isNewRecord ? 'new-record' : ''}`}>
+                {highestStreak} {isNewRecord && '🏆'}
+              </div>
+              <div className="summary-label">
+                Highest Streak
+                {isNewRecord && previousBest > 0 && (
+                  <div className="previous-best">Previous: {previousBest}</div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
       
-      {/* Gem Rating Display - hidden in Practice mode */}
+      {/* Row 3: Gem Rating Display - hidden in Practice mode */}
       {!isPractice && (
-        <div className="summary-gems">
-          <div className="gem-row">
+        <div className="gem-row">
+          <div className="gem-container">
             {[...Array(5)].map((_, i) => (
-              <svg key={i} className={`gem ${i < gemCount ? 'filled' : ''}`}>
-                <use href="#icon-gem" />
-              </svg>
+              <div 
+                key={i} 
+                className={`gem ${i < gemCount ? 'gem-active' : 'gem-inactive'}`}
+              >
+                ♦
+              </div>
             ))}
           </div>
-          <div className="summary-gems-label">Performance Rating</div>
+          <div className="gem-label"></div>
         </div>
       )}
       
-      <button className="restart-button" onClick={onRestart}>
-        Play Again
-      </button>
+      <button className="restart-button" onClick={onRestart}>Play Again</button>
     </div>
   );
 }
@@ -196,6 +222,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [wrongNotesCount, setWrongNotesCount] = useState(0); // Track incorrect notes played
   const [lastWrongAttemptSignature, setLastWrongAttemptSignature] = useState(null);
   const [failedChordNotes, setFailedChordNotes] = useState(new Set()); // Store failed chord notes to display on keyboard
+  const [failedChordName, setFailedChordName] = useState(null); // Store failed chord display name
   // Total questions will come from settings
   
   // Game state variables
@@ -469,6 +496,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setWrongNotesCount(0); // Reset wrong notes count
     setLastWrongAttemptSignature(null);
     setFailedChordNotes(new Set()); // Clear failed chord notes
+    setFailedChordName(null);
     setShowSummary(false); // Hide game summary
     setGameDifficulty(settings.difficulty); // Store difficulty for this game
     
@@ -489,6 +517,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const resetTraining = () => {
     setLastWrongAttemptSignature(null);
     setFailedChordNotes(new Set()); // Clear failed chord notes
+    setFailedChordName(null);
     // Stop the timer if it's running
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -744,6 +773,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
           const midiNotes = MusicTheory.getChordVoicing(currentChord);
           // Convert to a Set for the PianoKeyboard component
           setFailedChordNotes(new Set(midiNotes));
+          setFailedChordName(currentChord.displayName);
           
           setFeedback({
             type: 'gameover',
@@ -816,6 +846,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             wrongNotesCount={wrongNotesCount}
             totalAttempts={totalAttempts}
             difficulty={gameDifficulty}
+            failedChordName={failedChordName}
             onRestart={startTraining}
           />
         ) : (
