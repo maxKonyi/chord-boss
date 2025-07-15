@@ -14,6 +14,13 @@ MusicTheory.FLAT_NOTES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 
 // Define preferred roots to avoid awkward enharmonics like Cb and E#
 MusicTheory.PREFERRED_ROOTS = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B'];
 
+// Define valid note names for random key selection
+MusicTheory.VALID_NOTE_NAMES = ['C','C#','Db','D','D#','Eb','E','F','F#','Gb','G','G#','Ab','A','A#','Bb','B'];
+
+// Define default chord qualities for each scale degree in major and minor keys
+MusicTheory.MAJOR_KEY_QUALITIES = ['major', 'minor', 'minor', 'major', 'major', 'minor', 'diminished'];
+MusicTheory.MINOR_KEY_QUALITIES = ['minor', 'diminished', 'major', 'minor', 'minor', 'major', 'major'];
+
 // Note: We previously had a USE_SHARPS table here, but it's no longer needed
 // as the letter-based algorithm handles accidentals correctly
 

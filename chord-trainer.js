@@ -802,6 +802,64 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         const effectiveAttempts = newTotalAttempts + wrongNotesCount * 0.5;
         const newAccuracy = correctAnswers > 0 ? Math.round((correctAnswers / effectiveAttempts) * 100) : 0;
         setAccuracy(newAccuracy);
+        
+        // Update score
+        setScore(prevScore => prevScore + pointsEarned);
+        
+        // Play correct sound
+        playSound('correct', settings);
+        
+        // Show feedback
+        setFeedback({
+          type: 'correct',
+          message: `Correct! +${pointsEarned} points`
+        });
+        
+        // Increment question count
+        setQuestionCount(prevCount => prevCount + 1);
+        
+        // Handle progression advancement if in progression mode
+        if (settings.useProgressions && currentProgression) {
+          // Store the completed chord
+          if (currentChord) {
+            setCompletedChords(prev => [...prev, currentChord]);
+          }
+          
+          // Check if we need to advance to the next chord in the progression
+          const progressionLength = Array.isArray(currentProgression) ? 
+            currentProgression.length : 
+            (currentProgression.chords ? currentProgression.chords.length : 0);
+          
+          if (progressionIndex < progressionLength - 1) {
+            // Move to the next chord in the progression
+            setProgressionIndex(prevIndex => prevIndex + 1);
+          } else {
+            // End of progression reached, generate a new progression
+            setProgressionIndex(0);
+            setCurrentProgression(null);
+          }
+        }
+        
+        // Generate a new question after a short delay
+        setTimeout(() => {
+          // Reset processing flag
+          setIsProcessingChord(false);
+          
+          // Check if we've reached the max question count
+          if (questionCount + 1 >= settings.questionCount) {
+            // Game completed successfully
+            setIsRunning(false);
+            setGameDifficulty(settings.difficulty);
+            
+            // Show game summary after a short delay
+            setTimeout(() => {
+              setShowSummary(true);
+            }, 1000);
+          } else {
+            // Generate the next question
+            generateNewQuestion();
+          }
+        }, 1000);
       }
     }
     
