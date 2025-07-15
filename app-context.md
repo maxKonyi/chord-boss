@@ -8,6 +8,7 @@ The Composer Piano Trainer is a web-based application that helps users learn and
 - Chord training system with multiple difficulty levels
 - Comprehensive chord library (triads, 6th, 7th, and 9th chords)
 - Multiple inversion modes for chord practice
+- Chord progression mode for practicing common chord sequences
 - Performance tracking with scoring and feedback
 - Preset system for quick configuration
 
@@ -134,6 +135,26 @@ The Composer Piano Trainer is a web-based application that helps users learn and
 - Sus2 and Sus4 chords are not inverted (similar to augmented chords)
 - Dark mode styling applies only to the keyboard, not score symbols
 - The app saves user preferences and settings in localStorage
+
+## Chord Progression Mode
+The app features a dedicated chord progression mode that allows users to practice sequences of chords rather than individual chords:
+
+- **Progression Categories**: Organized into Simple, Intermediate, and Complex categories
+- **Progression Types**: 
+  - Triads in Major Key
+  - Triads in Minor Key
+  - Triads with Mixed qualities
+  - Sevenths progressions in Major and Minor keys
+  - Jazz Standards progressions
+  - Extended chord progressions
+- **Key Selection**: Practice progressions in fixed or random keys
+- **Inversion Modes**: Three options for handling chord inversions in progressions:
+  - Root Only: All chords must be played in root position
+  - Inversions: Specific inversions must be played as indicated
+  - Free: Any inversion of the correct chord is accepted
+- **Special Handling**: Sus2 and Sus4 chords are never inverted, similar to augmented chords
+- **UI Integration**: Dedicated tab in the sidebar with progression-specific controls
+- **Fallback Mechanism**: Gracefully falls back to single chord mode if progression data is invalid
 
 ## Technical Implementation Notes
 - Uses React's useState and useEffect hooks for state management
