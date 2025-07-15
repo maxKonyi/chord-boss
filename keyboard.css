@@ -204,6 +204,9 @@
   --white-key-active-bg: linear-gradient(to bottom, #4cc9f0, #3a86ff);
   --black-key-active-bg: linear-gradient(to bottom, #4361ee, #3a0ca3);
   --black-key-glow: rgba(67, 97, 238, 0.5);
+  --white-key-failed-bg: linear-gradient(to bottom, #ff9e00, #ff5e00);
+  --black-key-failed-bg: linear-gradient(to bottom, #e85d04, #9d0208);
+  --black-key-failed-glow: rgba(232, 93, 4, 0.5);
 }
 
 /* Dark Mode Class */
@@ -219,6 +222,10 @@
   --white-key-active-bg: linear-gradient(to bottom, #b892ff, #8c52ff); /* Lighter purple for white keys */
   --black-key-active-bg: linear-gradient(to bottom, #7b2cbf, #5a189a); /* Darker purple for black keys */
   --black-key-glow: rgba(140, 82, 255, 0.6); /* Purple glow to match the active colors */
+  /* Orange/red failed chord colors */
+  --white-key-failed-bg: linear-gradient(to bottom, #ff9e00, #ff5e00); /* Lighter orange for white keys */
+  --black-key-failed-bg: linear-gradient(to bottom, #e85d04, #9d0208); /* Darker orange/red for black keys */
+  --black-key-failed-glow: rgba(232, 93, 4, 0.6); /* Orange glow to match the failed colors */
 }
 
 .keyboard-container {
@@ -314,6 +321,26 @@
   background: var(--black-key-active-bg); /* Using CSS variables */
   transform: translateY(2px) scale(0.98); /* Enhanced press effect with slight scale */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px var(--black-key-glow); /* Glow effect using CSS variable */
+}
+
+/* Failed chord key states */
+.piano-key.white.failed {
+  background: var(--white-key-failed-bg); /* Using CSS variables for failed chord */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), 0 0 8px rgba(255, 94, 0, 0.4); /* Subtle orange glow */
+}
+
+.piano-key.black.failed {
+  background: var(--black-key-failed-bg); /* Using CSS variables for failed chord */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px var(--black-key-failed-glow); /* Orange glow effect */
+}
+
+/* When a key is both active and failed, active state takes precedence */
+.piano-key.white.active.failed {
+  background: var(--white-key-active-bg);
+}
+
+.piano-key.black.active.failed {
+  background: var(--black-key-active-bg);
 }
 
 /* Add a subtle reflection effect to active keys */

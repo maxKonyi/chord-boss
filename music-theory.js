@@ -478,6 +478,57 @@ MusicTheory.generateChord = function(rootNote, chordType, inversion = 'root', oc
   };
 };
 
+// Generate a simple voicing for a chord (for visualization purposes)
+// Returns an array of MIDI note numbers representing the chord
+MusicTheory.getChordVoicing = function(chord) {
+  if (!chord) return [];
+  
+  // Get the chord definition
+  const chordDef = MusicTheory.CHORD_TYPES[chord.type];
+  if (!chordDef) return [];
+  
+  // Get the root note MIDI number (assuming middle octave 4 by default)
+  const octave = chord.octave || 4;
+  
+  // Find the root note index
+  let rootIndex = -1;
+  rootIndex = MusicTheory.SHARP_NOTES.indexOf(chord.root);
+  if (rootIndex === -1) {
+    rootIndex = MusicTheory.FLAT_NOTES.indexOf(chord.root);
+  }
+  
+  // If still not found, try to find its enharmonic equivalent
+  if (rootIndex === -1) {
+    for (const [sharp, flat] of Object.entries(MusicTheory.ENHARMONIC_EQUIVALENTS)) {
+      if (sharp === chord.root || flat === chord.root) {
+        const sharpIndex = MusicTheory.SHARP_NOTES.indexOf(sharp);
+        if (sharpIndex !== -1) {
+          rootIndex = sharpIndex;
+          break;
+        }
+        const flatIndex = MusicTheory.FLAT_NOTES.indexOf(flat);
+        if (flatIndex !== -1) {
+          rootIndex = flatIndex;
+          break;
+        }
+      }
+    }
+  }
+  
+  if (rootIndex === -1) {
+    console.error(`Unknown root note: ${chord.root}`);
+    return [];
+  }
+  
+  // Calculate the root MIDI note (C4 = 60)
+  const rootMidi = 60 + rootIndex + ((octave - 4) * 12);
+  
+  // Generate the chord notes using the intervals
+  const midiNotes = chordDef.intervals.map(interval => rootMidi + interval);
+  
+  return midiNotes;
+};
+
 // Internal buffer of recently generated chords to prevent repeats
 MusicTheory._recentChords = MusicTheory._recentChords || [];
 const RECENT_BUFFER_SIZE = 5; // How many previous chords to avoid repeating

@@ -195,6 +195,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [totalAttempts, setTotalAttempts] = useState(0); // Track total attempts including mistakes
   const [wrongNotesCount, setWrongNotesCount] = useState(0); // Track incorrect notes played
   const [lastWrongAttemptSignature, setLastWrongAttemptSignature] = useState(null);
+  const [failedChordNotes, setFailedChordNotes] = useState(new Set()); // Store failed chord notes to display on keyboard
   // Total questions will come from settings
   
   // Game state variables
@@ -467,6 +468,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setTotalAttempts(0); // Reset total attempts
     setWrongNotesCount(0); // Reset wrong notes count
     setLastWrongAttemptSignature(null);
+    setFailedChordNotes(new Set()); // Clear failed chord notes
     setShowSummary(false); // Hide game summary
     setGameDifficulty(settings.difficulty); // Store difficulty for this game
     
@@ -486,6 +488,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   // Reset everything and end the current game
   const resetTraining = () => {
     setLastWrongAttemptSignature(null);
+    setFailedChordNotes(new Set()); // Clear failed chord notes
     // Stop the timer if it's running
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -734,10 +737,24 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       if (newLives <= 0) {
         // Game over
         setIsRunning(false);
-        setFeedback({
-          type: 'gameover',
-          message: `Game over! Final score: ${score}`
-        });
+        
+        // Generate and display the failed chord notes
+        if (currentChord) {
+          // Get the MIDI notes for the current chord
+          const midiNotes = MusicTheory.getChordVoicing(currentChord);
+          // Convert to a Set for the PianoKeyboard component
+          setFailedChordNotes(new Set(midiNotes));
+          
+          setFeedback({
+            type: 'gameover',
+            message: `Game over! The correct chord is shown on the keyboard. Final score: ${score}`
+          });
+        } else {
+          setFeedback({
+            type: 'gameover',
+            message: `Game over! Final score: ${score}`
+          });
+        }
         
         // Play game over sound
         playSound('gameOver', settings);
@@ -850,7 +867,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         
         {/* Piano keyboard inside the main content area */}
         <div className="keyboard-wrapper">
-          <PianoKeyboard activeNotes={activeNotes} startOctave={3} endOctave={5} />
+          <PianoKeyboard activeNotes={activeNotes} failedChordNotes={failedChordNotes} startOctave={3} endOctave={5} />
         </div>
       </div>
     </div>

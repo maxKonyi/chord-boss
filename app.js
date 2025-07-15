@@ -216,7 +216,7 @@ function MidiStatus({ midiAccess, midiError, midiInputs, selectedInput, handleIn
   );
 }
 
-function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
+function PianoKeyboard({ activeNotes, failedChordNotes = new Set(), startOctave = 3, endOctave = 5 }) {
   // State for dark mode toggle with localStorage persistence
   const [isDarkMode, setIsDarkMode] = React.useState(() => {
     // Try to get the saved preference from localStorage
@@ -232,13 +232,15 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
       const isSharp = note.includes('#');
       const midiNote = (octave + 1) * 12 + index; // MIDI octaves start at -1
       const isActive = activeNotes.has(midiNote);
+      const isFailed = failedChordNotes.has(midiNote);
       
       keys.push({
         note,
         octave,
         midiNote,
         isSharp,
-        isActive
+        isActive,
+        isFailed
       });
     });
   }
@@ -276,7 +278,7 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
           return (
             <div 
               key={`${key.note}${key.octave}`}
-              className={`piano-key white ${key.isActive ? 'active' : ''}`}
+              className={`piano-key white ${key.isActive ? 'active' : ''} ${key.isFailed ? 'failed' : ''}`}
               style={{ width: `${whiteKeyWidth}%` }}
             >
               {key.note === 'C' && <span className="key-label">C{key.octave}</span>}
@@ -320,7 +322,7 @@ function PianoKeyboard({ activeNotes, startOctave = 3, endOctave = 5 }) {
           return (
             <div 
               key={`${key.note}${key.octave}`}
-              className={`piano-key black ${key.isActive ? 'active' : ''}`}
+              className={`piano-key black ${key.isActive ? 'active' : ''} ${key.isFailed ? 'failed' : ''}`}
               style={{ left: `${(whiteKeysBefore - offset) * whiteKeyWidth}%` }}
             >
               {/* No labels for black keys */}
