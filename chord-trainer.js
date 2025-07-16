@@ -866,8 +866,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             }, 1000);
            // Processing flag will be reset in the main setTimeout callback
           } else if (!settings.useProgressions || !currentProgression) {
-            // Generate a new question if we're not in progression mode or have no progression
-            generateNewQuestion();
+            // No-op
           }
           // We don't need any additional logic here - advanceChord() already handles
           // progression advancement and timer restart
@@ -955,6 +954,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         timerRef.current = setInterval(() => {
           setElapsedTime(Date.now() - now);
         }, 100);
+
+        // Allow processing of chord again
+        setIsProcessingChord(false);
       }
     }
   }, [isRunning, elapsedTime, settings.difficulty, lives, score, questionCount, activeNotes, currentChord, isProcessingChord, lastWrongAttemptSignature, streak, highestStreak, multiplier, wrongNotesCount, totalAttempts]);
