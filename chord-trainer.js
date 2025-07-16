@@ -146,7 +146,7 @@ function GameSummary({ questionCount, settings, score, accuracy, highestStreak, 
             {[...Array(5)].map((_, i) => (
               <div 
                 key={i} 
-                className={`gem ${i < gemCount ? 'gem-active' : 'gem-inactive'}`}
+                className={`gem ${i < gemCount ? 'filled' : ''}`}
               >
                 ♦
               </div>
@@ -257,6 +257,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [currentChord, setCurrentChord] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isProcessingChord, setIsProcessingChord] = useState(false);
+  // Immediate lock to prevent duplicate validation within the same chord
+  const processingLockRef = useRef(false);
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [score, setScore] = useState(0);
@@ -281,6 +283,14 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   const [multiplier, setMultiplier] = useState(1); // Score multiplier based on streak
   const [highestStreak, setHighestStreak] = useState(0); // Track highest streak
   const [accuracy, setAccuracy] = useState(0);     // Percentage of correct answers
+
+  // Recalculate accuracy whenever questionCount, totalAttempts, or wrongNotesCount changes
+  useEffect(() => {
+    const effectiveAttempts = totalAttempts + wrongNotesCount * 0.5;
+    const acc = questionCount > 0 ? Math.round((questionCount / (effectiveAttempts || 1)) * 100) : 0;
+    setAccuracy(acc);
+  }, [questionCount, totalAttempts, wrongNotesCount]);
+
   const [showSummary, setShowSummary] = useState(false); // Whether to show the game summary
   const [gameDifficulty, setGameDifficulty] = useState(null); // Store the game difficulty
   
@@ -734,6 +744,9 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   useEffect(() => {
     activeNotesRef.current = new Set(activeNotes);
     
+    // Prevent duplicate validation for the same chord instance
+    if (processingLockRef.current) return;
+    
     // Check if the current chord is played correctly
     // Determine how many notes are actually required (handle optional 5th)
     const requiredNoteCount = (() => {
@@ -746,7 +759,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         return count;
       })();
     if (currentChord && isRunning && !isProcessingChord && activeNotes.size >= requiredNoteCount) {
-      // Set processing flag to prevent re-entry while handling this chord
+      // Lock processing to avoid duplicate validations
+      processingLockRef.current = true;
       setIsProcessingChord(true);
         
       // Convert activeNotes Set to an array of MIDI note numbers
@@ -769,6 +783,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // Reset processing flag after a short delay for wrong answers
         setTimeout(() => {
           setIsProcessingChord(false);
+          processingLockRef.current = false;
         }, 500);
       }
       
@@ -822,11 +837,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         const correctAnswers = questionCount + 1; // Current question is correct
         const newTotalAttempts = totalAttempts + 1;
         
-        // Calculate accuracy including wrong notes
-        // Formula: correctAnswers / (totalAttempts + wrongNotesCount * 0.5)
-        const effectiveAttempts = newTotalAttempts + wrongNotesCount * 0.5;
-        const newAccuracy = correctAnswers > 0 ? Math.round((correctAnswers / effectiveAttempts) * 100) : 0;
-        setAccuracy(newAccuracy);
+
         
         // Update score
         setScore(prevScore => prevScore + pointsEarned);
@@ -853,6 +864,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         setTimeout(() => {
           // Reset processing flag
           setIsProcessingChord(false);
+          processingLockRef.current = false;
           
           // Check if we've reached the max question count
           if (questionCount + 1 >= settings.questionCount) {
@@ -884,17 +896,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       // Increment total attempts since this counts as a failed attempt
       setTotalAttempts(prev => prev + 1);
       
-      // Update accuracy calculation
-      const correctAnswers = questionCount;
-      const newTotalAttempts = totalAttempts + 1;
-      
-      // Calculate accuracy including wrong notes
-      // Formula: correctAnswers / (totalAttempts + wrongNotesCount * 0.5)
-      // This counts each wrong note as half an attempt, giving a more nuanced accuracy score
-      const effectiveAttempts = newTotalAttempts + wrongNotesCount * 0.5;
-      const newAccuracy = correctAnswers > 0 ? Math.round((correctAnswers / effectiveAttempts) * 100) : 0;
-      setAccuracy(newAccuracy);
-      
+
       // Reset streak and multiplier
       setStreak(0);
       setMultiplier(1);
@@ -1017,7 +1019,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
                 <div 
                   key={index} 
                   className={`progression-chord ${index === progressionIndex ? 'current' : ''} ${completedChords.includes(index) ? 'completed' : ''}`}
-                >
+ >
                   {chord.displayName}
                   <div 
                     className={`progression-indicator ${index === progressionIndex ? 'current' : ''} ${completedChords.includes(index) ? 'completed' : ''}`}
