@@ -63,7 +63,7 @@ function App() {
       const velocity = message.data[2];
       
       // Note on with velocity > 0
-      if ((command === 144) && (velocity > 0)) {
+      if (((command === 144) || (command === 153)) && (velocity > 0)) {
         setActiveNotes(prev => {
           const updated = new Set(prev);
           updated.add(note);
@@ -71,7 +71,7 @@ function App() {
         });
       }
       // Note off or note on with velocity = 0
-      else if ((command === 128) || ((command === 144) && (velocity === 0))) {
+      else if ((command === 128) || (((command === 144) || (command === 153)) && (velocity === 0))) {
         setActiveNotes(prev => {
           const updated = new Set(prev);
           updated.delete(note);

@@ -2,6 +2,8 @@
 const { useState, useEffect, useRef, useCallback } = React;
 // Reference the Sidebar component exposed on the window object
 const Sidebar = window.Sidebar;
+// Access React hooks from the global React object
+// Note: useTimer is accessed directly from window.hooks when needed
 
 // Note: PresetSelector has been moved to sidebar.js
 
@@ -251,20 +253,104 @@ const playSound = (type, settings) => {
   }
 };
 
+// The useTimer hook is already accessed from window.hooks at the top of the file
+
+/**
+ * Centralized function to calculate score based on response time and difficulty
+ * @param {number} responseTime - Time taken to answer in milliseconds
+ * @param {string} difficulty - Game difficulty level ('easy', 'medium', 'hard', 'practice')
+ * @returns {number} - Points earned for this answer
+ */
+const calculateScore = (responseTime, difficulty) => {
+  // Get the maximum time allowed for this difficulty level
+  // Use the existing getDifficultyTime function (defined earlier in the file)
+  const maxTime = getDifficultyTime(difficulty) * 1000;
+  let points = 0;
+  
+  // Dynamic scoring based on percentage of max time
+  if (responseTime <= maxTime * 0.2) { // Super fast (0-20% of max time)
+    points = 10;
+  } else if (responseTime <= maxTime * 0.4) { // Very fast (20-40% of max time)
+    points = 8;
+  } else if (responseTime <= maxTime * 0.6) { // Fast (40-60% of max time)
+    points = 6;
+  } else if (responseTime <= maxTime * 0.8) { // Medium (60-80% of max time)
+    points = 4;
+  } else if (responseTime <= maxTime) { // Slow (80-100% of max time)
+    points = 2;
+  } else { // Over max time
+    points = 1;
+  }
+  
+  return points;
+};
+
+/**
+ * Centralized function to calculate accuracy based on question count and attempts
+ * @param {number} questionCount - Number of questions correctly answered
+ * @param {number} totalAttempts - Total number of attempts made
+ * @param {number} wrongNotesCount - Number of wrong notes played
+ * @returns {number} - Accuracy percentage (0-100)
+ */
+const calculateAccuracy = (questionCount, totalAttempts, wrongNotesCount) => {
+  // If no questions have been answered yet, accuracy is 0
+  if (questionCount === 0) return 0;
+  
+  // Calculate effective attempts - each wrong note counts as half an attempt
+  // This prevents excessive wrong note penalties while still accounting for them
+  const effectiveAttempts = Math.max(questionCount, totalAttempts + wrongNotesCount * 0.25);
+  
+  // Calculate accuracy percentage (questions correct / effective attempts)
+  // Ensure we don't divide by zero by using max of 1 for effectiveAttempts
+  const accuracyPercentage = Math.round((questionCount / effectiveAttempts) * 100);
+  
+  // Clamp accuracy between 0-100%
+  return Math.max(0, Math.min(100, accuracyPercentage));
+};
+
 // Chord Trainer Component
 function ChordTrainer({ activeNotes, midiStatus }) {
   // State for the trainer
   const [currentChord, setCurrentChord] = useState(null);
+  
+  // Use the game state hook to manage game state
+  const {
+    state: gameState,
+    GAME_STATES,
+    lives,
+    score,
+    streak,
+    multiplier,
+    questionCount,
+    totalAttempts,
+    showFeedback,
+    feedbackType,
+    feedbackMessage,
+    showSummary,
+    isProcessingChord,
+    completedChords,
+    startGame,
+    correctAnswer,
+    wrongAnswer,
+    timeout,
+    nextChord,
+    nextQuestion,
+    gameOver,
+    resetGame,
+    setProcessing,
+    clearProcessing
+  } = window.hooks.useGameState();
+  
+  // Track if the game is running
   const [isRunning, setIsRunning] = useState(false);
-  const [isProcessingChord, setIsProcessingChord] = useState(false);
+  // ... (rest of the code remains the same)
   // Immediate lock to prevent duplicate validation within the same chord
   const processingLockRef = useRef(false);
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [score, setScore] = useState(0);
+  // Using feedback from useGameState instead of local state
   const [feedback, setFeedback] = useState(null);
-  const [questionCount, setQuestionCount] = useState(0);
-  const [totalAttempts, setTotalAttempts] = useState(0); // Track total attempts including mistakes
+  // score, questionCount, and totalAttempts now come from useGameState
   const [wrongNotesCount, setWrongNotesCount] = useState(0); // Track incorrect notes played
   const [lastWrongAttemptSignature, setLastWrongAttemptSignature] = useState(null);
   const [failedChordNotes, setFailedChordNotes] = useState(new Set()); // Store failed chord notes to display on keyboard
@@ -273,25 +359,22 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   // Progression mode state
   const [currentProgression, setCurrentProgression] = useState(null); // Current progression data
   const [progressionIndex, setProgressionIndex] = useState(0); // Current chord index in progression
-  const [completedChords, setCompletedChords] = useState([]); // Indices of completed chords in progression
+  // completedChords now comes from useGameState
   const [progressionKey, setProgressionKey] = useState('C'); // Key for current progression
   // Total questions will come from settings
   
-  // Game state variables
-  const [lives, setLives] = useState(3);           // Player starts with 3 lives
-  const [streak, setStreak] = useState(0);         // Current streak of correct answers
-  const [multiplier, setMultiplier] = useState(1); // Score multiplier based on streak
+  // Game state variables (lives, streak, multiplier) now come from useGameState
   const [highestStreak, setHighestStreak] = useState(0); // Track highest streak
   const [accuracy, setAccuracy] = useState(0);     // Percentage of correct answers
 
   // Recalculate accuracy whenever questionCount, totalAttempts, or wrongNotesCount changes
   useEffect(() => {
-    const effectiveAttempts = totalAttempts + wrongNotesCount * 0.5;
-    const acc = questionCount > 0 ? Math.round((questionCount / (effectiveAttempts || 1)) * 100) : 0;
+    // Use the centralized calculateAccuracy function
+    const acc = calculateAccuracy(questionCount, totalAttempts, wrongNotesCount);
     setAccuracy(acc);
   }, [questionCount, totalAttempts, wrongNotesCount]);
 
-  const [showSummary, setShowSummary] = useState(false); // Whether to show the game summary
+  // showSummary now comes from useGameState
   const [gameDifficulty, setGameDifficulty] = useState(null); // Store the game difficulty
   
   // Settings for chord generation with localStorage persistence
@@ -337,38 +420,113 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   // Reference to track active notes
   const activeNotesRef = useRef(new Set());
   
-  // Timer interval reference
-  const timerRef = useRef(null);
-  
   // Reference to track the question delay timeout
   const questionDelayTimeoutRef = useRef(null);
+  
+  // Get difficulty time in milliseconds
+  const getMaxTime = () => getDifficultyTime(settings.difficulty) * 1000;
+  
+  // Initialize the timer using our custom hook from window.hooks
+  const { 
+    isRunning: timerIsRunning, 
+    elapsedTime: timerElapsedTime, 
+    startTimer, 
+    stopTimer, 
+    resetTimer, 
+    restartTimer,
+    percentElapsed
+  } = window.hooks.useTimer({
+    autoStart: false,
+    interval: 100,
+    maxTime: getMaxTime(),
+    onTimeout: () => {
+      // Timer is complete, lose a life
+      const newLives = lives - 1;
+      // Temporarily block further processing until we load the next chord
+      setProcessing(); // Use FSM action instead of direct state setting
+      
+      // Show feedback
+      playSound('wrong', settings);
+      
+      // Use timeout action from FSM to handle lives, streak, multiplier, and totalAttempts
+      timeout();
+      
+      // If out of lives (after timeout action), end the game
+      if (lives <= 0) {
+        setIsRunning(false);
+        setGameDifficulty(settings.difficulty);
+        
+        // Generate and display the failed chord notes
+        // Make sure to stop the timer to prevent callbacks from firing
+        stopTimer();
+        
+        if (currentChord) {
+          // Get the MIDI notes for the current chord
+          const midiNotes = MusicTheory.getChordVoicing(currentChord);
+          // Convert to a Set for the PianoKeyboard component
+          setFailedChordNotes(new Set(midiNotes));
+          setFailedChordName(currentChord.displayName);
+          
+          // Use gameOver action to transition to summary state
+          gameOver(`Game over! The correct chord is shown on the keyboard. Final score: ${score}`);
+        } else {
+          // Use gameOver action to transition to summary state
+          gameOver(`Game over! Final score: ${score}`);
+        }
+        
+        // Play game over sound once
+        playSound('gameOver', settings);
+      } else {
+        // Show feedback with remaining lives
+        setFeedback({
+          type: 'timeout',
+          message: `Time's up! ${lives} ${lives === 1 ? 'life' : 'lives'} remaining.`
+        });
+        
+        // In progression mode, move to next chord
+        if (settings.useProgressions && currentProgression) {
+          // Move to next chord in progression
+          advanceChord(false); // false indicates this was not a correct answer
+        } else {
+          // In single chord mode, restart timer for the same chord
+          restartTimer();
+          
+          // Allow processing of chord again
+          clearProcessing(); // Use FSM action instead of direct state setting
+        }
+      }
+    }
+  });
+  
+  // Sync our timer state with component state
+  useEffect(() => {
+    setElapsedTime(timerElapsedTime);
+  }, [timerElapsedTime]);
+  
+  // Update maxTime when difficulty changes
+  useEffect(() => {
+    // This will update the maxTime in the useTimer hook
+    resetTimer();
+  }, [settings.difficulty]);
   
   // Skip the current question and move to the next one
   const skipQuestion = () => {
     setLastWrongAttemptSignature(null);
     // Stop timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
-    // Update question count but don't add points
-    const newQuestionCount = questionCount + 1;
-    setQuestionCount(newQuestionCount);
+    stopTimer();
     
     // Check if we've reached the question limit
-    if (newQuestionCount >= settings.questionCount) {
+    if (questionCount + 1 >= settings.questionCount) {
       // End of session
       setIsRunning(false); // Only set to false when training is complete
-      setFeedback({
-        type: 'complete',
-        message: `Training complete! Final score: ${score}`
-      });
+      gameOver(`Training complete! Final score: ${score}`);
       return;
     }
     
     // If delay is 0 (instant), skip the feedback and move to next question immediately
     if (settings.questionDelay === 0) {
+      // Use nextQuestion action to increment question count
+      nextQuestion(true);
       generateNewQuestion();
       return;
     }
@@ -376,7 +534,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     // Otherwise show feedback and wait for the configured delay
     setFeedback({
       type: 'skipped',
-      message: 'Question skipped'
+      message: 'Question skipped.'
     });
     
     // Clear any existing timeout
@@ -417,10 +575,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     
     // Reset the game state when selecting a preset
     // Stop any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    stopTimer();
     
     // Clear any pending question delay timeout
     if (questionDelayTimeoutRef.current) {
@@ -428,12 +583,11 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       questionDelayTimeoutRef.current = null;
     }
     
-    // Reset game state
+    // Reset game state using the FSM resetGame action
+    resetGame();
     setIsRunning(false);
     setCurrentChord(null);
     setElapsedTime(0);
-    setScore(0);
-    setQuestionCount(0);
     
     // Show feedback about the selected preset
     setFeedback({
@@ -470,15 +624,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       setIsRunning(true);
       }
       // (Re)start timer for the first chord in the new progression
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      const now = Date.now();
-      setStartTime(now);
-      setElapsedTime(0);
-      timerRef.current = setInterval(() => {
-        setElapsedTime(Date.now() - now);
-      }, 100);
+      resetTimer();
+      startTimer();
     } catch (err) {
       console.error('Failed to start new progression:', err.message);
       // Do not fall back to single-chord mode anymore; just log the error.
@@ -486,7 +633,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   }, [settings, generateNewQuestion]);
 
   // Move to the next chord or start a new progression
-  const advanceChord = useCallback(() => {
+  const advanceChord = useCallback((wasCorrect = true) => {
     // For non-progression mode, use the standard generateNewQuestion with delay
     if (!settings.useProgressions) {
       generateNewQuestion();
@@ -495,16 +642,17 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     
     // For progression mode, check if we're at the end of a progression
     if (!currentProgression || progressionIndex >= currentProgression.chords.length - 1) {
-      // We're at the end of a progression or need to start a new one
-      // Increment question count when completing a full progression
-      setQuestionCount(prevCount => prevCount + 1);
+      // We're at the end of a progression
+      // Use nextQuestion action to increment question count if the last chord was correct
+      if (wasCorrect) {
+        nextQuestion(true, true); // true = new question, true = reset completedChords
+      }
       
-      // Use generateNewQuestion which will handle the delay
+      // Use generateNewQuestion which will handle the delay and start a new progression
       generateNewQuestion();
       return;
     } else {
       // We're advancing to the next chord in the same progression
-      // No delay needed between chords in the same progression
       const nextIndex = progressionIndex + 1;
       setProgressionIndex(nextIndex);
       const nextChord = currentProgression.chords[nextIndex];
@@ -518,16 +666,13 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         setCurrentChord(nextChord);
       }
 
-      // restart timer for the new chord (for progression mode, next chord in same progression)
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      const now = Date.now();
-      setStartTime(now);
-      setElapsedTime(0);
-      timerRef.current = setInterval(() => {
-        setElapsedTime(Date.now() - now);
-      }, 100);
+      // Reset timer for the next chord in the progression
+      resetTimer();
+      startTimer();
+      
+      // Use nextChord action to move to the next chord in the progression
+      // This will reset lives and update completedChords
+      nextChord(nextChord?.id || `chord-${nextIndex}`);
     }
   }, [settings, currentProgression, progressionIndex, generateNewQuestion, startNewProgression]);
 
@@ -562,10 +707,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       // ---- single-chord mode below ----
       
       // Make sure any previous timer is cleared
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      stopTimer();
       
       // Ensure settings are valid before generating a chord
       const safeSettings = {...settings};
@@ -598,17 +740,13 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       
       // Update game state
       setIsRunning(true);
-      setIsProcessingChord(false); // Reset processing flag when generating a new question
-      const now = Date.now();
-      setStartTime(now);
-      setElapsedTime(0); // Explicitly reset elapsed time to 0 for immediate timer bar reset
+      clearProcessing(); // Reset processing flag when generating a new question
       setFeedback(null);
       setLastWrongAttemptSignature(null);
       
       // Start a new timer
-      timerRef.current = setInterval(() => {
-        setElapsedTime(Date.now() - now);
-      }, 100);
+      resetTimer();
+      startTimer();
     }, delayTime); // Use the question delay from settings
     
   }, [settings, questionCount, score, currentProgression, progressionIndex, completedChords]);
@@ -666,32 +804,24 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   
   // Start a new training session
   const startTraining = () => {
-    // Reset all game state completely
-    setScore(0);
-    setQuestionCount(0);
+    // Reset UI-specific state
     setElapsedTime(0);
-    setFeedback(null); // Clear any feedback messages
     setCurrentChord(null); // Clear current chord before generating a new one
-    setLives(3); // Reset lives
-    setStreak(0); // Reset streak
-    setMultiplier(1); // Reset multiplier
     setHighestStreak(0); // Reset highest streak
-    setAccuracy(0); // Reset accuracy
-    setTotalAttempts(0); // Reset total attempts
     setWrongNotesCount(0); // Reset wrong notes count
     setLastWrongAttemptSignature(null);
     setFailedChordNotes(new Set()); // Clear failed chord notes
     setFailedChordName(null);
-    setShowSummary(false); // Hide game summary
-    // Mark the game as running
-    setIsRunning(true);
     setGameDifficulty(settings.difficulty); // Store difficulty for this game
     
+    // Use startGame action from FSM to reset game state and transition to PLAYING state
+    startGame();
+    
+    // Mark the game as running
+    setIsRunning(true);
+    
     // Stop any existing timer
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    stopTimer();
     
     // Small delay to ensure state is reset before generating a new question
     // This prevents potential race conditions
@@ -706,10 +836,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     setFailedChordNotes(new Set()); // Clear failed chord notes
     setFailedChordName(null);
     // Stop the timer if it's running
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    stopTimer();
     
     // Clear any pending question delay timeout
     if (questionDelayTimeoutRef.current) {
@@ -717,24 +844,14 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       questionDelayTimeoutRef.current = null;
     }
     
-    // Reset all game state
+    // Reset UI state
     setIsRunning(false);
     setCurrentChord(null);
     setElapsedTime(0);
-    setLives(3);
-    setStreak(0);
-    setMultiplier(1);
     
-    // Show a feedback message with the final score
-    setFeedback({
-      type: 'complete',
-      message: `Game ended. Final score: ${score}`
-    });
-    
-    // Show game summary
-    setTimeout(() => {
-      setShowSummary(true);
-    }, 1000);
+    // Use gameOver action from FSM to transition to summary state
+    // This will handle showing feedback and summary
+    gameOver(`Game ended. Final score: ${score}`);
     
     // Don't reset score and question count immediately
     // This allows the player to see their final stats
@@ -761,7 +878,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     if (currentChord && isRunning && !isProcessingChord && activeNotes.size >= requiredNoteCount) {
       // Lock processing to avoid duplicate validations
       processingLockRef.current = true;
-      setIsProcessingChord(true);
+      setProcessing(); // Use FSM action instead of direct state setting
         
       // Convert activeNotes Set to an array of MIDI note numbers
       const playedNotesArray = Array.from(activeNotes);
@@ -775,14 +892,13 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         if (signature !== lastWrongAttemptSignature) {
           setWrongNotesCount(prev => prev + 1);
           setLastWrongAttemptSignature(signature);
-          // Reset streak and multiplier on wrong attempt
-          setStreak(0);
-          setMultiplier(1);
+          // Use wrongAnswer action from FSM to handle streak, multiplier, and lives
+          wrongAnswer();
           playSound('wrong', settings);
         }
         // Reset processing flag after a short delay for wrong answers
         setTimeout(() => {
-          setIsProcessingChord(false);
+          clearProcessing(); // Use FSM action instead of direct state setting
           processingLockRef.current = false;
         }, 500);
       }
@@ -791,56 +907,18 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // Reset wrong attempt tracker for next question
         setLastWrongAttemptSignature(null);
         // Stop timer
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+        stopTimer();
         
-        // Calculate score with multiplier
-        const responseTime = elapsedTime;
-        const maxTime = getDifficultyTime(settings.difficulty) * 1000;
-        let pointsEarned = 0;
-        
-        // Dynamic scoring based on percentage of max time
-        if (responseTime <= maxTime * 0.2) { // Super fast (0-20% of max time)
-          pointsEarned = 10;
-        } else if (responseTime <= maxTime * 0.4) { // Very fast (20-40% of max time)
-          pointsEarned = 8;
-        } else if (responseTime <= maxTime * 0.6) { // Fast (40-60% of max time)
-          pointsEarned = 6;
-        } else if (responseTime <= maxTime * 0.8) { // Medium (60-80% of max time)
-          pointsEarned = 4;
-        } else if (responseTime <= maxTime) { // Slow (80-100% of max time)
-          pointsEarned = 2;
-        } else { // Over max time
-          pointsEarned = 1;
-        }
-        
-        // Update streak and multiplier
-        const newStreak = streak + 1;
-        setStreak(newStreak);
+        // Use the centralized calculateScore function
+        const pointsEarned = calculateScore(elapsedTime, settings.difficulty);
         
         // Update highest streak if needed
-        if (newStreak > highestStreak) {
-          setHighestStreak(newStreak);
+        if (streak + 1 > highestStreak) {
+          setHighestStreak(streak + 1);
         }
         
-        // Calculate multiplier (cap at 5x)
-        const newMultiplier = Math.min(Math.floor(newStreak / 2) + 1, 5);
-        setMultiplier(newMultiplier);
-        
-        // Apply multiplier to points
-        pointsEarned *= newMultiplier;
-        
-        // Increment total attempts and update accuracy
-        setTotalAttempts(prev => prev + 1);
-        const correctAnswers = questionCount + 1; // Current question is correct
-        const newTotalAttempts = totalAttempts + 1;
-        
-
-        
-        // Update score
-        setScore(prevScore => prevScore + pointsEarned);
+        // Use correctAnswer action from FSM to handle score, streak, multiplier, and totalAttempts
+        correctAnswer(pointsEarned);
         
         // Play correct sound
         playSound('correct', settings);
@@ -854,7 +932,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // Only increment question count in single-chord mode
         // In progression mode, we count the entire progression as one question
         if (!settings.useProgressions) {
-          setQuestionCount(prevCount => prevCount + 1);
+          nextQuestion(true); // true = new question
         }
         
         // Handle next step
@@ -863,7 +941,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
         // After a short delay, reset processing flag and check if we've reached max questions
         setTimeout(() => {
           // Reset processing flag
-          setIsProcessingChord(false);
+          clearProcessing(); // Use FSM action instead of direct state setting
           processingLockRef.current = false;
           
           // Check if we've reached the max question count
@@ -872,9 +950,12 @@ function ChordTrainer({ activeNotes, midiStatus }) {
             setIsRunning(false);
             setGameDifficulty(settings.difficulty);
             
-            // Show game summary after a short delay
+            // Make sure to stop the timer to prevent callbacks from firing
+            stopTimer();
+            
+            // Show game summary after a short delay using FSM action
             setTimeout(() => {
-              setShowSummary(true);
+              gameOver('Game completed successfully!');
             }, 1000);
            // Processing flag will be reset in the main setTimeout callback
           } else if (!settings.useProgressions || !currentProgression) {
@@ -886,91 +967,10 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       }
     }
     
-    if (isRunning && elapsedTime >= getDifficultyTime(settings.difficulty) * 1000) {
-      // Timer is complete, lose a life
-      const newLives = lives - 1;
-      // Temporarily block further processing until we load the next chord
-      setIsProcessingChord(true);
-      setLives(newLives);
-      
-      // Increment total attempts since this counts as a failed attempt
-      setTotalAttempts(prev => prev + 1);
-      
-
-      // Reset streak and multiplier
-      setStreak(0);
-      setMultiplier(1);
-      
-      // Stop the timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-      
-      // Play life loss sound
-      playSound('lifeLoss', settings);
-      
-      if (newLives <= 0) {
-        // Game over
-        setIsRunning(false);
-        
-        // Generate and display the failed chord notes
-        if (currentChord) {
-          // Get the MIDI notes for the current chord
-          const midiNotes = MusicTheory.getChordVoicing(currentChord);
-          // Convert to a Set for the PianoKeyboard component
-          setFailedChordNotes(new Set(midiNotes));
-          setFailedChordName(currentChord.displayName);
-          
-          setFeedback({
-            type: 'gameover',
-            message: `Game over! The correct chord is shown on the keyboard. Final score: ${score}`
-          });
-        } else {
-          setFeedback({
-            type: 'gameover',
-            message: `Game over! Final score: ${score}`
-          });
-        }
-        
-        // Play game over sound
-        playSound('gameOver', settings);
-        
-        // Store current difficulty and show game summary after a short delay
-        setTimeout(() => {
-          setGameDifficulty(settings.difficulty);
-          setShowSummary(true);
-        }, 1500);
-      } else {
-        // Continue with same chord
-        setFeedback({
-          type: 'timeout',
-          message: `Time's up! ${newLives} ${newLives === 1 ? 'life' : 'lives'} remaining.`
-        });
-        
-        // Restart timer for the same chord
-        const now = Date.now();
-        setStartTime(now);
-        setElapsedTime(0);
-        
-        timerRef.current = setInterval(() => {
-          setElapsedTime(Date.now() - now);
-        }, 100);
-
-        // Allow processing of chord again
-        setIsProcessingChord(false);
-      }
-    }
+    // Timer expiration is now handled by the useTimer hook's onTimeout callback
   }, [isRunning, elapsedTime, settings.difficulty, lives, score, questionCount, activeNotes, currentChord, isProcessingChord, lastWrongAttemptSignature, streak, highestStreak, multiplier, wrongNotesCount, totalAttempts]);
   
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
+  // Clean up timer on unmount is handled by the useTimer hook
   
   // No duplicate imports or invalid syntax here
 
