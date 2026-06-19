@@ -20,8 +20,14 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
-    <!-- Babel for in-browser JSX transform (keeps setup zero-build) -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel for in-browser JSX transform (keeps setup zero-build).
+         Pin to Babel 7 so JSX is transformed for classic scripts. -->
+    <script src="https://unpkg.com/@babel/standalone@7.26.10/babel.min.js"></script>
+    <script>
+      Babel.registerPreset('react-classic', {
+        presets: [[Babel.availablePresets.react, { runtime: 'classic' }]]
+      });
+    </script>
     
     <!-- Music theory helper functions -->
     <script src="music-theory.js"></script>
@@ -36,8 +42,8 @@
     <script src="logger.js"></script>
     
     <!-- Custom hooks -->
-    <script type="text/babel" src="hooks/useTimer.js"></script>
-    <script type="text/babel" src="hooks/useGameState.js"></script>
+    <script type="text/babel" data-presets="env,react-classic" src="hooks/useTimer.js"></script>
+    <script type="text/babel" data-presets="env,react-classic" src="hooks/useGameState.js"></script>
   </head>
   <body>
     <!-- SVG Icons -->
@@ -50,12 +56,12 @@
     <div id="root"></div>
 
     <!-- Sidebar component -->
-    <script type="text/babel" src="sidebar.js"></script>
+    <script type="text/babel" data-presets="env,react-classic" src="sidebar.js"></script>
     
     <!-- Chord trainer component -->
-    <script type="text/babel" src="chord-trainer.js"></script>
+    <script type="text/babel" data-presets="env,react-classic" src="chord-trainer.js"></script>
     
     <!-- Main application script. Using type="text/babel" lets us author in JSX without a build step. -->
-    <script type="text/babel" src="app.js"></script>
+    <script type="text/babel" data-presets="env,react-classic" src="app.js"></script>
   </body>
 </html>
