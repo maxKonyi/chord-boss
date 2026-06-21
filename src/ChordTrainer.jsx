@@ -1,7 +1,14 @@
 // Import React hooks from the global React object
-const { useState, useEffect, useRef, useCallback } = React;
-// Reference the Sidebar component exposed on the window object
-const Sidebar = window.Sidebar;
+import { useState, useEffect, useRef, useCallback } from 'react';
+import Sidebar from './Sidebar.jsx';
+import GameLogic from './game-logic.js';
+import MidiUtils from './midi-utils.js';
+import MusicTheory from './music-theory.js';
+import Presets from './presets.js';
+import TrainerSettings from './trainer-settings.js';
+import useGameState from './hooks/useGameState.js';
+import useTimer from './hooks/useTimer.js';
+import { PianoKeyboard, Timer } from './App.jsx';
 // Access React hooks from the global React object
 // Note: useTimer is accessed directly from window.hooks when needed
 
@@ -279,7 +286,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     resetGame,
     setProcessing,
     clearProcessing
-  } = window.hooks.useGameState();
+  } = useGameState();
   
   // Track if the game is running
   const [isRunning, setIsRunning] = useState(false);
@@ -323,14 +330,10 @@ function ChordTrainer({ activeNotes, midiStatus }) {
   });
   
   // Update settings and save to localStorage
-  const updateSettings = (newSettings) => {
-    setSettings(prev => {
-      const updatedSettings = TrainerSettings.mergeSettings(prev, newSettings);
-      // Save to localStorage
-      localStorage.setItem('chordTrainerSettings', JSON.stringify(updatedSettings));
-      return updatedSettings;
-    });
-  };
+  const updateSettings = useCallback((newSettings) => {
+    const storage = typeof localStorage !== 'undefined' ? localStorage : null;
+    TrainerSettings.createPersistentUpdater(setSettings, storage)(newSettings);
+  }, []);
   
   // Reference to track active notes
   const activeNotesRef = useRef(new Set());
@@ -350,7 +353,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
     resetTimer, 
     restartTimer,
     percentElapsed
-  } = window.hooks.useTimer({
+  } = useTimer({
     autoStart: false,
     interval: 100,
     maxTime: getMaxTime(),
@@ -835,7 +838,7 @@ function ChordTrainer({ activeNotes, midiStatus }) {
       {/* Use our new Sidebar component that's available on the window object */}
       <Sidebar 
         settings={settings} 
-        setSettings={setSettings} 
+        setSettings={updateSettings} 
         midiStatus={midiStatus}
         handleSelectPreset={handleSelectPreset}
       />
@@ -936,4 +939,8 @@ function ChordTrainer({ activeNotes, midiStatus }) {
 }
 
 // Export the ChordTrainer component to the global window object
-window.ChordTrainer = ChordTrainer;
+if (typeof window !== 'undefined') {
+  window.ChordTrainer = ChordTrainer;
+}
+
+export default ChordTrainer;

@@ -1,5 +1,8 @@
 // Import React hooks from the global React object
-const { useState, useEffect, useRef } = React;
+import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import MidiUtils from './midi-utils.js';
+import Presets from './presets.js';
 
 // Help Modal Component
 function HelpModal({ isOpen, onClose }) {
@@ -77,7 +80,7 @@ function HelpModal({ isOpen, onClose }) {
   
   // Use createPortal to render the modal at the document body level
   // This ensures it's outside any stacking contexts that might affect z-index
-  return ReactDOM.createPortal(modalContent, document.body);
+  return createPortal(modalContent, document.body);
 }
 
 // Sidebar Component
@@ -1136,4 +1139,8 @@ function PresetSelector({ onSelectPreset }) {
 }
 
 // Export the Sidebar component to make it available to other files
-window.Sidebar = Sidebar;
+if (typeof window !== 'undefined') {
+  window.Sidebar = Sidebar;
+}
+
+export default Sidebar;

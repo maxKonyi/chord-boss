@@ -1,10 +1,10 @@
-// Simple HTTP server to serve the Composer Piano app
+// Simple HTTP server to serve the built Composer Piano app
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 const PORT = Number(process.env.PORT || process.argv[2]) || 8080;
-const WEB_ROOT = path.join(__dirname, 'docs');
+const WEB_ROOT = path.join(__dirname, 'dist');
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -37,10 +37,15 @@ const server = http.createServer((req, res) => {
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        // File not found
-        fs.readFile(path.join(WEB_ROOT, 'index.html'), (err, content) => {
+        fs.readFile(path.join(WEB_ROOT, 'index.html'), (indexErr, indexContent) => {
+          if (indexErr) {
+            res.writeHead(503, { 'Content-Type': 'text/plain' });
+            res.end('Build output not found. Run npm run build before starting this server.');
+            return;
+          }
+
           res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(content, 'utf-8');
+          res.end(indexContent);
         });
       } else {
         // Server error
@@ -50,7 +55,7 @@ const server = http.createServer((req, res) => {
     } else {
       // Success
       res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content, 'utf-8');
+      res.end(content);
     }
   });
 });

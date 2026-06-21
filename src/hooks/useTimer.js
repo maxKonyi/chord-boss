@@ -6,7 +6,7 @@
  */
 
 // Access React hooks from the global React object
-const { useState, useEffect, useRef } = React;
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Custom hook for managing timers with consistent behavior
@@ -114,10 +114,15 @@ function useTimer({
 }
 
 // Create a global hooks object if it doesn't exist
-window.hooks = window.hooks || {};
+if (typeof window !== 'undefined') {
+  window.hooks = window.hooks || {};
 
-// Add the useTimer hook to the global hooks object
-window.hooks.useTimer = useTimer;
+  // Add the useTimer hook to the global hooks object
+  window.hooks.useTimer = useTimer;
+}
 
 // For direct access in JSX
 const useTimerHook = useTimer;
+
+export { useTimerHook };
+export default useTimer;

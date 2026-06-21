@@ -1,7 +1,10 @@
 /* Composer Piano Trainer – Milestone 3
    Added Chord Mode functionality with basic triads. */
 
-const { useState, useEffect, useRef } = React;
+import { useState, useEffect } from 'react';
+import ChordTrainer from './ChordTrainer.jsx';
+import MidiUtils from './midi-utils.js';
+import MusicTheory from './music-theory.js';
 
 // Note mapping constants
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -218,7 +221,7 @@ function MidiStatus({ midiAccess, midiError, midiInputs, selectedInput, handleIn
 
 function PianoKeyboard({ activeNotes, failedChordNotes = new Set(), startOctave = 3, endOctave = 5 }) {
   // State for dark mode toggle with localStorage persistence
-  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     // Try to get the saved preference from localStorage
     const savedDarkMode = localStorage.getItem('pianoKeyboardDarkMode');
     // Return the parsed value if it exists, otherwise default to false
@@ -404,13 +407,12 @@ function Timer({ isRunning, elapsedTime, maxSeconds = 10, difficulty }) {
   );
 }
 
-// Expose components to the global scope so they can be used in other files
-window.MidiStatus = MidiStatus;
+if (typeof window !== 'undefined') {
+  window.MidiStatus = MidiStatus;
+  window.testEnharmonicSpellings = function() {
+    return MusicTheory.testEnharmonicSpellings();
+  };
+}
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-
-// Add a test function for enharmonic spellings
-// You can run this in the browser console by typing: testEnharmonicSpellings()
-window.testEnharmonicSpellings = function() {
-  return MusicTheory.testEnharmonicSpellings();
-};
+export { TrainerLayout, MidiStatus, PianoKeyboard, Timer };
+export default App;

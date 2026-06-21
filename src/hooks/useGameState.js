@@ -6,7 +6,7 @@
  */
 
 // Access React hooks from the global React object
-const { useReducer } = React;
+import { useReducer } from 'react';
 
 /**
  * Game state constants
@@ -260,13 +260,24 @@ function useGameState() {
 }
 
 // Create a global hooks object if it doesn't exist
-window.hooks = window.hooks || {};
+if (typeof window !== 'undefined') {
+  window.hooks = window.hooks || {};
 
-// Add the useGameState hook to the global hooks object
-window.hooks.useGameState = useGameState;
-window.hooks.__gameStateTest = {
+  // Add the useGameState hook to the global hooks object
+  window.hooks.useGameState = useGameState;
+  window.hooks.__gameStateTest = {
+    GAME_STATES,
+    ACTIONS,
+    initialState,
+    gameStateReducer
+  };
+}
+
+export {
   GAME_STATES,
   ACTIONS,
   initialState,
   gameStateReducer
 };
+
+export default useGameState;

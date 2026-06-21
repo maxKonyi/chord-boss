@@ -1,8 +1,10 @@
 /* Music Theory Helper Functions
    Provides chord generation, validation, and other music theory utilities */
 
+import GameLogic from './game-logic.js';
+
 // Create a global MusicTheory object to expose our functions
-window.MusicTheory = {};
+const MusicTheory = {};
 
 // Note constants with preferred enharmonic spellings
 MusicTheory.NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -885,7 +887,7 @@ MusicTheory.validateChord = function(playedNotes, expectedChord) {
   
   // Support optional 5th logic (for seventh chords and larger)
   // Optional 5th applies only to chords with a 7th or higher (not 6th chords)
-  const optionalFifthFlag = window.GameLogic ? GameLogic.canOmitFifth(expectedChord) : expectedChord.optionalFifth === true;
+  const optionalFifthFlag = GameLogic ? GameLogic.canOmitFifth(expectedChord) : expectedChord.optionalFifth === true;
   let rootPc = null;
   if (optionalFifthFlag && expectedChord.root) {
     // Helper to convert note name to pitch class
@@ -1186,3 +1188,9 @@ MusicTheory.testEnharmonicSpellings = function() {
   console.log('============================================');
   return results;
 };
+
+if (typeof window !== 'undefined') {
+  window.MusicTheory = MusicTheory;
+}
+
+export default MusicTheory;
