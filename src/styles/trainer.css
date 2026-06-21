@@ -3,7 +3,8 @@
   min-height: 100vh;
   width: 100%;
   background:
-    radial-gradient(circle at 70% 20%, rgba(62, 183, 167, 0.08), transparent 30%),
+    radial-gradient(circle at 70% 20%, rgba(56, 184, 170, 0.07), transparent 30%),
+    linear-gradient(135deg, rgba(14, 26, 39, 0.72), rgba(8, 13, 20, 0.2) 42%),
     var(--color-bg);
 }
 
@@ -19,7 +20,7 @@
 }
 
 .question-display {
-  background: var(--color-surface);
+  background: linear-gradient(180deg, var(--color-surface-muted), var(--color-surface));
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   color: var(--color-text);
@@ -31,11 +32,11 @@
   margin: 0.5rem auto 0.35rem;
   padding: 1rem;
   text-align: center;
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-panel), var(--shadow-control-inset);
 }
 
 .timer-container {
-  background: #111516;
+  background: #08111b;
   border-radius: 999px;
   border: 1px solid var(--color-border-strong);
   height: 8px;
@@ -43,6 +44,7 @@
   overflow: hidden;
   width: 80%;
   max-width: 500px;
+  box-shadow: var(--shadow-control-inset);
 }
 
 .timer-progress {
@@ -55,11 +57,11 @@
 }
 
 .timer-green {
-  background: var(--color-teal);
+  background: linear-gradient(90deg, var(--color-teal), #7bd7cd);
 }
 
 .timer-yellow {
-  background: var(--color-pumpkin);
+  background: linear-gradient(90deg, var(--color-pumpkin), var(--color-pumpkin-hover));
 }
 
 .timer-red {
@@ -99,12 +101,19 @@
 
 .score-item {
   text-align: center;
+  min-width: 76px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(26, 38, 52, 0.72), rgba(12, 20, 31, 0.72));
+  box-shadow: var(--shadow-control-inset);
 }
 
 .score-value {
   font-size: 1.55rem;
   font-weight: 800;
   color: var(--color-pumpkin);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .chord-trainer-score {
@@ -120,7 +129,7 @@
 }
 
 .result-feedback {
-  background: var(--color-surface);
+  background: linear-gradient(180deg, var(--color-surface-muted), var(--color-surface));
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   margin: 0.35rem auto;
@@ -133,23 +142,27 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  box-shadow: var(--shadow-control-inset);
 }
 
 .result-correct {
   border-color: var(--color-success);
   color: #dff5e4;
+  background: linear-gradient(180deg, rgba(95, 191, 120, 0.12), var(--color-surface));
 }
 
 .result-skipped,
 .result-preset {
   border-color: var(--color-teal);
   color: #d9f7f3;
+  background: linear-gradient(180deg, rgba(56, 184, 170, 0.12), var(--color-surface));
 }
 
 .result-incorrect,
 .result-gameover {
   border-color: var(--color-danger);
   color: #ffe2df;
+  background: linear-gradient(180deg, rgba(217, 91, 79, 0.12), var(--color-surface));
 }
 
 .controls {
@@ -164,23 +177,24 @@
   padding: 0.55rem 0.9rem;
   font-size: 0.95rem;
   border: 1px solid var(--color-border-strong);
-  background: var(--color-surface-muted);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-muted));
   color: var(--color-text);
+  box-shadow: var(--shadow-control);
 }
 
 .controls button:hover {
-  border-color: var(--color-teal);
+  border-color: var(--color-pumpkin-hover);
 }
 
 .controls .start-button {
-  background: var(--color-pumpkin);
+  background: linear-gradient(180deg, var(--color-pumpkin-hover), var(--color-pumpkin));
   border-color: var(--color-pumpkin);
   color: #1b1008;
   font-weight: 800;
 }
 
 .controls .start-button:hover {
-  background: var(--color-pumpkin-hover);
+  background: linear-gradient(180deg, #f59d4f, var(--color-pumpkin-hover));
   border-color: var(--color-pumpkin-hover);
 }
 
@@ -200,11 +214,12 @@
   align-items: center;
   margin: 0.5rem 0 1rem;
   padding: 0.65rem;
-  background: var(--color-surface);
+  background: linear-gradient(180deg, rgba(26, 38, 52, 0.9), rgba(13, 21, 32, 0.95));
   border: 1px solid var(--color-border);
   border-radius: 8px;
   max-width: 100%;
   overflow-x: auto;
+  box-shadow: var(--shadow-control-inset);
 }
 
 .progression-name {
@@ -226,7 +241,7 @@
 
 .progression-chord {
   padding: 0.5rem 0.85rem;
-  background: #15191a;
+  background: linear-gradient(180deg, var(--color-surface-muted), #101925);
   border: 1px solid var(--color-border-strong);
   border-radius: 6px;
   position: relative;
@@ -234,11 +249,13 @@
   min-width: 60px;
   text-align: center;
   transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: var(--shadow-control);
 }
 
 .progression-chord.current {
   border-color: var(--color-pumpkin);
   transform: translateY(-2px);
+  color: var(--color-text);
 }
 
 .progression-chord.completed {
@@ -265,12 +282,12 @@
 }
 
 .game-summary {
-  background: var(--color-surface);
+  background: linear-gradient(180deg, var(--color-surface-muted), var(--color-surface));
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   padding: 1.25rem;
   color: var(--color-text);
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-panel), var(--shadow-control-inset);
 }
 
 .summary-row {
@@ -296,12 +313,13 @@
 }
 
 .restart-button {
-  background: var(--color-pumpkin);
+  background: linear-gradient(180deg, var(--color-pumpkin-hover), var(--color-pumpkin));
   border: 1px solid var(--color-pumpkin);
   border-radius: 6px;
   color: #1b1008;
   font-weight: 800;
   padding: 0.55rem 0.9rem;
+  box-shadow: var(--shadow-control);
 }
 
 .keyboard-wrapper {

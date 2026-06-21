@@ -1,19 +1,23 @@
-/* Chord Boss - charcoal, pumpkin, and teal theme */
+/* Chord Boss - dark blue hardware theme */
 :root {
-  --color-bg: #0b0d0e;
-  --color-sidebar: #131617;
-  --color-surface: #191d1f;
-  --color-surface-muted: #202527;
-  --color-border: #2a3033;
-  --color-border-strong: #3a4246;
+  --color-bg: #080d14;
+  --color-sidebar: #0d1520;
+  --color-surface: #121b27;
+  --color-surface-muted: #1a2634;
+  --color-surface-raised: #202d3b;
+  --color-border: #273443;
+  --color-border-strong: #3a4a5c;
   --color-text: #f2eee8;
-  --color-text-muted: #a9ada8;
-  --color-pumpkin: #d8792c;
-  --color-pumpkin-hover: #ef8c3a;
-  --color-teal: #3eb7a7;
+  --color-text-muted: #aeb7bd;
+  --color-pumpkin: #e57f32;
+  --color-pumpkin-hover: #f09442;
+  --color-teal: #38b8aa;
   --color-danger: #d95b4f;
-  --color-success: #57b36a;
-  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --color-success: #5fbf78;
+  --shadow-panel: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --shadow-control: 0 2px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 18px rgba(0, 0, 0, 0.24);
+  --shadow-control-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -2px 5px rgba(0, 0, 0, 0.28);
+  --shadow-pressed: inset 0 2px 6px rgba(0, 0, 0, 0.36);
 }
 
 * {
@@ -64,27 +68,29 @@ input:focus-visible {
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
   color: var(--color-text);
-  background: var(--color-surface-muted);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-muted));
+  box-shadow: var(--shadow-control);
 }
 
 .button:hover {
-  border-color: var(--color-teal);
+  border-color: var(--color-pumpkin-hover);
 }
 
 .button-primary {
-  background: var(--color-pumpkin);
+  background: linear-gradient(180deg, var(--color-pumpkin-hover), var(--color-pumpkin));
   border-color: var(--color-pumpkin);
   color: #1b1008;
   font-weight: 700;
+  box-shadow: var(--shadow-control), 0 0 0 1px rgba(229, 127, 50, 0.08);
 }
 
 .button-primary:hover {
-  background: var(--color-pumpkin-hover);
+  background: linear-gradient(180deg, #f59d4f, var(--color-pumpkin-hover));
   border-color: var(--color-pumpkin-hover);
 }
 
 .button-secondary {
-  background: var(--color-surface-muted);
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-muted));
   color: var(--color-text);
 }
 

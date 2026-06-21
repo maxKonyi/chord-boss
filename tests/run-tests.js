@@ -381,6 +381,27 @@ test('sidebar refresh keeps collapsible summaries, advanced settings, and preset
   assert.ok(source.includes('Toggle between light and dark keyboard modes'), 'expected help to preserve keyboard mode guidance');
 });
 
+test('dark blue hardware style pass keeps palette and tactile control contracts', () => {
+  const globalCss = fs.readFileSync(path.join(root, 'src/styles/style.css'), 'utf8');
+  const sidebarCss = fs.readFileSync(path.join(root, 'src/styles/sidebar.css'), 'utf8');
+  const trainerCss = fs.readFileSync(path.join(root, 'src/styles/trainer.css'), 'utf8');
+
+  assert.ok(globalCss.includes('--color-bg: #080d14'), 'expected main background to lean dark blue-charcoal');
+  assert.ok(globalCss.includes('--color-sidebar: #0d1520'), 'expected sidebar surface to lean dark blue');
+  assert.ok(globalCss.includes('--shadow-control:'), 'expected shared raised control shadow token');
+  assert.ok(globalCss.includes('--shadow-control-inset:'), 'expected shared inset control shadow token');
+  assert.ok(globalCss.includes('--color-pumpkin: #e57f32'), 'expected warm orange to remain dominant accent');
+  assert.ok(globalCss.includes('--color-teal: #38b8aa'), 'expected restrained teal secondary accent');
+
+  assert.ok(sidebarCss.includes('box-shadow: var(--shadow-control-inset)'), 'expected sidebar controls to use inset tactile treatment');
+  assert.ok(sidebarCss.includes('box-shadow: var(--shadow-control)'), 'expected sidebar controls to use raised tactile treatment');
+  assert.ok(sidebarCss.includes('.delay-control input[type="range"]::-webkit-slider-thumb'), 'expected delay range thumb styling');
+  assert.ok(sidebarCss.includes('.delay-control input[type="range"]::-moz-range-thumb'), 'expected delay range thumb styling for Firefox');
+
+  assert.ok(trainerCss.includes('box-shadow: var(--shadow-panel), var(--shadow-control-inset)'), 'expected trainer panels to align with hardware style');
+  assert.ok(trainerCss.includes('.score-item'), 'expected score items to remain styled');
+});
+
 test('trainer extracted summary preserves practice gates and summary classes', () => {
   const source = fs.readFileSync(path.join(root, 'src', 'components', 'trainer', 'GameSummary.jsx'), 'utf8');
 
