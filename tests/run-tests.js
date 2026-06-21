@@ -46,6 +46,61 @@ test('normalizes All MIDI inputs sentinel to null', () => {
   assert.strictEqual(MidiUtils.normalizeInputSelection('keyboard-1'), 'keyboard-1');
 });
 
+test('parses MIDI note messages across all channels', () => {
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x90, 60, 100]), { type: 'noteon', note: 60, velocity: 100 });
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x91, 61, 64]), { type: 'noteon', note: 61, velocity: 64 });
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x9f, 62, 1]), { type: 'noteon', note: 62, velocity: 1 });
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x80, 60, 0]), { type: 'noteoff', note: 60, velocity: 0 });
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x8e, 61, 20]), { type: 'noteoff', note: 61, velocity: 20 });
+  assert.deepStrictEqual(MidiUtils.parseNoteMessage([0x90, 62, 0]), { type: 'noteoff', note: 62, velocity: 0 });
+  assert.strictEqual(MidiUtils.parseNoteMessage([0xb0, 1, 64]), null);
+});
+
+test('MIDI helpers format notes and expand keyboard octave range', () => {
+  assert.strictEqual(MidiUtils.getMidiNoteName(60), 'C4');
+  assert.strictEqual(MidiUtils.getMidiNoteName(61), 'C#4');
+  assert.strictEqual(MidiUtils.getMidiNoteName(21), 'A0');
+  assert.strictEqual(MidiUtils.getMidiNoteName(null), '');
+
+  assert.deepStrictEqual(MidiUtils.getKeyboardOctaveRange(new Set(), new Set(), 3, 5), {
+    startOctave: 3,
+    endOctave: 5
+  });
+  assert.deepStrictEqual(MidiUtils.getKeyboardOctaveRange(new Set([36]), new Set(), 3, 5), {
+    startOctave: 2,
+    endOctave: 5
+  });
+  assert.deepStrictEqual(MidiUtils.getKeyboardOctaveRange(new Set([96]), new Set([24]), 3, 5), {
+    startOctave: 1,
+    endOctave: 7
+  });
+});
+
+test('app MIDI wiring refreshes devices and listener setup when inputs change', () => {
+  const source = fs.readFileSync(path.join(root, 'src/App.jsx'), 'utf8');
+
+  assert.ok(source.includes('refreshMidiInputs'), 'expected shared MIDI input refresh helper in App');
+  assert.ok(source.includes('access.onstatechange'), 'expected Web MIDI statechange handling');
+  assert.ok(source.includes('const refreshedInputs = refreshMidiInputs(access)'), 'expected state changes to capture a refreshed input snapshot');
+  assert.ok(source.includes('setMidiInputs(refreshedInputs)'), 'expected device snapshot refresh on state changes');
+  assert.ok(source.includes('input.onmidimessage = handleMIDIMessage'), 'expected MIDI message listener attachment');
+  assert.ok(source.includes('[selectedInput, midiAccess, midiInputs]'), 'expected listener setup to rerun when inputs refresh');
+  assert.ok(source.includes('lastMidiMessage'), 'expected last MIDI message diagnostics state');
+  assert.ok(source.includes('activeNoteCount'), 'expected active note count to be passed through diagnostics');
+});
+
+test('sidebar displays MIDI diagnostics for troubleshooting hardware input', () => {
+  const source = fs.readFileSync(path.join(root, 'src/Sidebar.jsx'), 'utf8');
+  const sidebarCss = fs.readFileSync(path.join(root, 'src/styles/sidebar.css'), 'utf8');
+
+  assert.ok(source.includes('midi-diagnostics'), 'expected MIDI diagnostics block');
+  assert.ok(source.includes('midiStatus.accessState'), 'expected access state diagnostic');
+  assert.ok(source.includes('midiStatus.activeNoteCount'), 'expected active note count diagnostic');
+  assert.ok(source.includes('midiStatus.lastNoteName'), 'expected last note diagnostic');
+  assert.ok(source.includes('midiStatus.lastMessageType'), 'expected last message type diagnostic');
+  assert.ok(sidebarCss.includes('.midi-diagnostics'), 'expected diagnostics styling');
+});
+
 test('trainer settings defaults and saved settings keep expected shape', () => {
   const defaults = TrainerSettings.getDefaultSettings();
   assert.deepStrictEqual(defaults.chordTypes, ['major', 'minor']);

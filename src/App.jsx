@@ -15,12 +15,38 @@ for (let i = 0; i < 128; i++) {
   MIDI_NOTE_NAMES[i] = { name: noteName, octave };
 }
 
+function refreshMidiInputs(access) {
+  const inputs = [];
+  if (!access) return inputs;
+
+  access.inputs.forEach(input => {
+    if (input.state !== 'disconnected') {
+      inputs.push(input);
+    }
+  });
+  return inputs;
+}
+
+function getSavedMidiInput(inputs) {
+  const savedInput = localStorage.getItem('selectedMidiInput');
+  return savedInput && inputs.some(input => input.id === savedInput) ? savedInput : null;
+}
+
+function getSelectedInputName(midiInputs, selectedInput) {
+  if (!selectedInput) return 'All inputs';
+
+  const input = midiInputs.find(candidate => candidate.id === selectedInput);
+  return input ? (input.name || input.manufacturer || 'Unknown Device') : 'Unavailable input';
+}
+
 function App() {
   const [page, setPage] = useState('chord'); // 'chord' | 'scale'
   const [midiAccess, setMidiAccess] = useState(null);
+  const [midiAccessState, setMidiAccessState] = useState('initializing');
   const [midiError, setMidiError] = useState(null);
   const [activeNotes, setActiveNotes] = useState(new Set());
   const [midiInputs, setMidiInputs] = useState([]);
+  const [lastMidiMessage, setLastMidiMessage] = useState(null);
   const [selectedInput, setSelectedInput] = useState(() => {
     // Try to get the saved MIDI input from localStorage
     return localStorage.getItem('selectedMidiInput');
@@ -29,31 +55,40 @@ function App() {
   // Request MIDI access when component mounts
   useEffect(() => {
     if (navigator.requestMIDIAccess) {
+      setMidiAccessState('requesting');
       navigator.requestMIDIAccess()
         .then(access => {
           console.log('MIDI Access granted!');
+          setMidiAccessState('ready');
           setMidiAccess(access);
           
           // Get list of inputs
-          const inputs = [];
-          access.inputs.forEach(input => {
-            inputs.push(input);
-          });
+          const inputs = refreshMidiInputs(access);
           setMidiInputs(inputs);
           
           // Use saved input or default to "All inputs" (null means listen to all inputs)
-          const savedInput = localStorage.getItem('selectedMidiInput');
-          if (savedInput && inputs.some(input => input.id === savedInput)) {
-            setSelectedInput(savedInput);
-          } else {
-            setSelectedInput(null);
-          }
+          setSelectedInput(getSavedMidiInput(inputs));
+
+          access.onstatechange = () => {
+            const refreshedInputs = refreshMidiInputs(access);
+            setMidiInputs(refreshedInputs);
+            setSelectedInput(currentSelection => {
+              if (!currentSelection || refreshedInputs.some(input => input.id === currentSelection)) {
+                return currentSelection;
+              }
+
+              localStorage.removeItem('selectedMidiInput');
+              return null;
+            });
+          };
         })
         .catch(err => {
           console.error('MIDI Access denied!', err);
+          setMidiAccessState('error');
           setMidiError('Could not access your MIDI devices: ' + err.message);
         });
     } else {
+      setMidiAccessState('unsupported');
       setMidiError('Web MIDI API is not supported in your browser');
     }
   }, []);
@@ -61,23 +96,27 @@ function App() {
   // Set up MIDI input listeners when selected input changes
   useEffect(() => {
     const handleMIDIMessage = (message) => {
-      const command = message.data[0];
-      const note = message.data[1];
-      const velocity = message.data[2];
+      const noteMessage = MidiUtils.parseNoteMessage(message.data);
       
-      // Note on with velocity > 0
-      if (((command === 144) || (command === 153)) && (velocity > 0)) {
+      if (!noteMessage) return;
+
+      setLastMidiMessage({
+        ...noteMessage,
+        noteName: MidiUtils.getMidiNoteName(noteMessage.note),
+        receivedAt: Date.now()
+      });
+
+      if (noteMessage.type === 'noteon') {
         setActiveNotes(prev => {
           const updated = new Set(prev);
-          updated.add(note);
+          updated.add(noteMessage.note);
           return updated;
         });
       }
-      // Note off or note on with velocity = 0
-      else if ((command === 128) || (((command === 144) || (command === 153)) && (velocity === 0))) {
+      else if (noteMessage.type === 'noteoff') {
         setActiveNotes(prev => {
           const updated = new Set(prev);
-          updated.delete(note);
+          updated.delete(noteMessage.note);
           return updated;
         });
       }
@@ -88,7 +127,7 @@ function App() {
       // Set up listeners for all inputs
       const inputListeners = new Map();
       
-      midiAccess.inputs.forEach(input => {
+      midiInputs.forEach(input => {
         input.onmidimessage = handleMIDIMessage;
         inputListeners.set(input.id, input);
       });
@@ -103,12 +142,7 @@ function App() {
     // Otherwise listen to just the selected input
     else if (selectedInput && midiAccess) {
       // Find the input object by ID
-      let inputObj = null;
-      midiAccess.inputs.forEach(input => {
-        if (input.id === selectedInput) {
-          inputObj = input;
-        }
-      });
+      const inputObj = midiInputs.find(input => input.id === selectedInput);
       
       // If we found the input, set up the listener
       if (inputObj) {
@@ -119,7 +153,7 @@ function App() {
         };
       }
     }
-  }, [selectedInput, midiAccess]);
+  }, [selectedInput, midiAccess, midiInputs]);
   
   // Handle MIDI input selection change
   const handleMidiInputChange = (e) => {
@@ -145,7 +179,19 @@ function App() {
       >
         <ChordTrainer 
           activeNotes={activeNotes} 
-          midiStatus={{ midiAccess, midiError, midiInputs, selectedInput, handleInputChange: handleMidiInputChange }}
+          midiStatus={{
+            midiAccess,
+            midiError,
+            midiInputs,
+            selectedInput,
+            selectedInputName: getSelectedInputName(midiInputs, selectedInput),
+            accessState: midiAccessState,
+            activeNoteCount: activeNotes.size,
+            lastMidiMessage,
+            lastNoteName: lastMidiMessage ? lastMidiMessage.noteName : '',
+            lastMessageType: lastMidiMessage ? lastMidiMessage.type : '',
+            handleInputChange: handleMidiInputChange
+          }}
         />
       </TrainerLayout>
     );
@@ -227,10 +273,14 @@ function PianoKeyboard({ activeNotes, failedChordNotes = new Set(), startOctave 
     // Return the parsed value if it exists, otherwise default to false
     return savedDarkMode ? JSON.parse(savedDarkMode) : false;
   });
+
+  const keyboardRange = MidiUtils.getKeyboardOctaveRange(activeNotes, failedChordNotes, startOctave, endOctave);
+  const visibleStartOctave = keyboardRange.startOctave;
+  const visibleEndOctave = keyboardRange.endOctave;
   
   // Generate keys for the specified octave range
   const keys = [];
-  for (let octave = startOctave; octave <= endOctave; octave++) {
+  for (let octave = visibleStartOctave; octave <= visibleEndOctave; octave++) {
     NOTES.forEach((note, index) => {
       const isSharp = note.includes('#');
       const midiNote = (octave + 1) * 12 + index; // MIDI octaves start at -1
@@ -334,7 +384,7 @@ function PianoKeyboard({ activeNotes, failedChordNotes = new Set(), startOctave 
         })}
         
         {/* Octave indicators */}
-        {Array.from({ length: endOctave - startOctave + 1 }, (_, i) => startOctave + i).map(octave => (
+        {Array.from({ length: visibleEndOctave - visibleStartOctave + 1 }, (_, i) => visibleStartOctave + i).map(octave => (
           <div 
             key={`octave-${octave}`}
             className="octave-indicator"

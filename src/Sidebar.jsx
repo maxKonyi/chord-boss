@@ -231,6 +231,12 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
   const updateSettings = updates => setSettings({ ...settings, ...updates });
   const selectedChordTypes = settings.chordTypes || [];
   const selectedProgressions = settings.selectedProgressions || [];
+  const midiDeviceLabel = midiStatus
+    ? `${midiStatus.midiInputs.length} ${midiStatus.midiInputs.length === 1 ? 'device' : 'devices'}`
+    : '0 devices';
+  const midiLastNoteLabel = midiStatus && midiStatus.lastNoteName
+    ? `${midiStatus.lastNoteName} ${midiStatus.lastMessageType === 'noteon' ? 'on' : 'off'}`
+    : 'None yet';
 
   const setDifficulty = difficulty => {
     const nextSettings = { ...settings, difficulty };
@@ -285,6 +291,31 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
               ))}
             </select>
           </label>
+          <div className="midi-diagnostics" aria-live="polite">
+            <div className="midi-diagnostic-row">
+              <span>Status</span>
+              <strong>{midiStatus.midiError ? 'Error' : midiStatus.accessState}</strong>
+            </div>
+            <div className="midi-diagnostic-row">
+              <span>Devices</span>
+              <strong>{midiDeviceLabel}</strong>
+            </div>
+            <div className="midi-diagnostic-row">
+              <span>Listening</span>
+              <strong>{midiStatus.selectedInputName}</strong>
+            </div>
+            <div className="midi-diagnostic-row">
+              <span>Active Notes</span>
+              <strong>{midiStatus.activeNoteCount}</strong>
+            </div>
+            <div className="midi-diagnostic-row">
+              <span>Last Note</span>
+              <strong>{midiLastNoteLabel}</strong>
+            </div>
+            {midiStatus.midiError && (
+              <p className="midi-diagnostic-error">{midiStatus.midiError}</p>
+            )}
+          </div>
         </section>
       )}
 
