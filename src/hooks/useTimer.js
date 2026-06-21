@@ -1,5 +1,5 @@
 /**
- * useTimer.js - Custom hook for managing timers in the Composer Piano Trainer
+ * useTimer.js - Custom hook for managing timers in Chord Boss
  * 
  * This hook centralizes timer logic to ensure only one timer/interval is active at a time
  * and provides consistent timer management across the application.

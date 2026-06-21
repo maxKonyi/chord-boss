@@ -1,4 +1,4 @@
-/* Preset System for Composer Piano Trainer
+/* Preset System for Chord Boss
    Provides a collection of predefined settings at different difficulty levels */
 
 // Create a global Presets object to expose our functions and data

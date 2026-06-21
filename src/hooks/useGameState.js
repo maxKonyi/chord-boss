@@ -1,5 +1,5 @@
 /**
- * useGameState.js - Custom hook for managing game state in the Composer Piano Trainer
+ * useGameState.js - Custom hook for managing game state in Chord Boss
  * 
  * This hook implements a finite state machine (FSM) for game states to replace
  * scattered boolean flags with explicit state transitions.

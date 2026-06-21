@@ -1,4 +1,4 @@
-/* Composer Piano Trainer – Milestone 3
+/* Chord Boss - Milestone 3
    Added Chord Mode functionality with basic triads. */
 
 import { useState, useEffect } from 'react';

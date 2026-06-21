@@ -1,4 +1,4 @@
-// Simple HTTP server to serve the built Composer Piano app
+// Simple HTTP server to serve the built Chord Boss app
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
