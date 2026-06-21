@@ -360,6 +360,27 @@ test('trainer extracted controls preserve callbacks and practice-only skip behav
   assert.ok(source.includes('!isRunning'), 'expected start/end control split by running state');
 });
 
+test('sidebar refresh keeps collapsible summaries, advanced settings, and preset popout contracts', () => {
+  const source = fs.readFileSync(path.join(root, 'src/Sidebar.jsx'), 'utf8');
+  const sidebarCss = fs.readFileSync(path.join(root, 'src/styles/sidebar.css'), 'utf8');
+  const trainerCss = fs.readFileSync(path.join(root, 'src/styles/trainer.css'), 'utf8');
+
+  assert.ok(source.includes('getSelectionSummary'), 'expected selection summary helper');
+  assert.ok(source.includes('openChordGroups'), 'expected chord groups to use collapsible state');
+  assert.ok(source.includes('openProgressionGroups'), 'expected progression groups to use collapsible state');
+  assert.ok(source.includes('Advanced'), 'expected advanced section label');
+  assert.ok(source.indexOf('Make 5th Optional for 7th+ chords') > source.indexOf('Advanced'), 'expected optional fifth in Advanced section');
+  assert.ok(source.indexOf('Mute audio') > source.indexOf('Advanced'), 'expected mute audio in Advanced section');
+  assert.ok(source.includes('popoutPosition'), 'expected preset selector popout positioning to remain');
+  assert.ok(source.includes('document.addEventListener'), 'expected outside-click close behavior to remain');
+  assert.ok(source.includes('onSelectPreset(preset.id)'), 'expected preset selection callback to remain');
+  assert.ok(sidebarCss.includes('width: 450px'), 'expected desktop sidebar width to remain 450px');
+  assert.ok(trainerCss.includes('.chord-trainer-score'), 'expected trainer score to be styled in trainer css');
+  assert.ok(trainerCss.includes('var(--color-pumpkin)'), 'expected trainer score styling to use refreshed theme tokens');
+  assert.ok(source.includes('Use the <strong>Clear All</strong> button'), 'expected help to explain Clear All');
+  assert.ok(source.includes('Toggle between light and dark keyboard modes'), 'expected help to preserve keyboard mode guidance');
+});
+
 test('trainer extracted summary preserves practice gates and summary classes', () => {
   const source = fs.readFileSync(path.join(root, 'src', 'components', 'trainer', 'GameSummary.jsx'), 'utf8');
 

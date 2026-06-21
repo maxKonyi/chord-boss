@@ -2,9 +2,9 @@ import GameLogic from '../../game-logic.js';
 
 function SessionControls({ difficulty, isRunning, onEnd, onSkip, onStart }) {
   return (
-    <div className="controls" style={{ marginTop: '1rem' }}>
+    <div className="controls">
       {!isRunning ? (
-        <button onClick={onStart}>Start Training</button>
+        <button onClick={onStart} className="start-button">Start Training</button>
       ) : (
         <>
           {GameLogic.isPracticeMode(difficulty) && (

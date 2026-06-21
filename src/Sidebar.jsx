@@ -1,47 +1,127 @@
-// Import React hooks from the global React object
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import MidiUtils from './midi-utils.js';
 import Presets from './presets.js';
 
-// Help Modal Component
+const CHORD_GROUPS = [
+  {
+    id: 'triads',
+    name: 'Triads',
+    columns: 3,
+    items: [
+      { id: 'major', label: 'Major', title: 'Root, Major 3rd, Perfect 5th' },
+      { id: 'minor', label: 'Minor', title: 'Root, Minor 3rd, Perfect 5th' },
+      { id: 'diminished', label: 'Dim', title: 'Root, Minor 3rd, Diminished 5th' },
+      { id: 'augmented', label: 'Aug', title: 'Root, Major 3rd, Augmented 5th' },
+      { id: 'sus2', label: 'Sus2', title: 'Root, Major 2nd, Perfect 5th' },
+      { id: 'sus4', label: 'Sus4', title: 'Root, Perfect 4th, Perfect 5th' }
+    ]
+  },
+  {
+    id: 'sixths',
+    name: '6th Chords',
+    columns: 2,
+    items: [
+      { id: '6', label: '6', title: 'Root, Major 3rd, Perfect 5th, Major 6th' },
+      { id: 'm6', label: 'm6', title: 'Root, Minor 3rd, Perfect 5th, Major 6th' }
+    ]
+  },
+  {
+    id: 'sevenths',
+    name: '7th Chords',
+    columns: 3,
+    items: [
+      { id: 'major7', label: 'maj7', title: 'Root, Major 3rd, Perfect 5th, Major 7th' },
+      { id: 'dominant7', label: '7', title: 'Root, Major 3rd, Perfect 5th, Minor 7th' },
+      { id: 'minor7', label: 'm7', title: 'Root, Minor 3rd, Perfect 5th, Minor 7th' },
+      { id: 'diminished7', label: 'dim7', title: 'Root, Minor 3rd, Diminished 5th, Diminished 7th' },
+      { id: 'halfDiminished7', label: 'm7b5', title: 'Root, Minor 3rd, Diminished 5th, Minor 7th' },
+      { id: 'minorMajor7', label: 'mM7', title: 'Root, Minor 3rd, Perfect 5th, Major 7th' }
+    ]
+  },
+  {
+    id: 'ninths',
+    name: '9th Chords',
+    columns: 3,
+    items: [
+      { id: 'dominant9', label: '9', title: 'Root, Major 3rd, Perfect 5th, Minor 7th, Major 9th' },
+      { id: 'major9', label: 'maj9', title: 'Root, Major 3rd, Perfect 5th, Major 7th, Major 9th' },
+      { id: 'minor9', label: 'm9', title: 'Root, Minor 3rd, Perfect 5th, Minor 7th, Major 9th' },
+      { id: 'minorMajor9', label: 'mM9', title: 'Root, Minor 3rd, Perfect 5th, Major 7th, Major 9th' },
+      { id: '6(9)', label: '6(9)', title: 'Major 6 add 9' },
+      { id: 'm6(9)', label: 'm6(9)', title: 'Minor 6 add 9' }
+    ]
+  }
+];
+
+const PROGRESSION_GROUPS = Presets.PROGRESSION_COLLECTIONS.map(collection => ({
+  id: collection.id,
+  name: collection.name,
+  columns: collection.progressions.length > 2 ? 2 : 1,
+  items: collection.progressions.map(category => ({
+    id: category.id,
+    label: category.name,
+    title: category.progressions.map(progression => progression.name).join(', ')
+  }))
+}));
+
+const KEY_OPTIONS = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
+
+function getSelectionSummary(items, selectedIds) {
+  const selectedCount = items.filter(item => selectedIds.includes(item.id)).length;
+
+  if (selectedCount === 0) return 'None';
+  if (selectedCount === items.length) return 'All';
+  return `${selectedCount} selected`;
+}
+
+function toggleItem(selectedIds, itemId) {
+  if (selectedIds.includes(itemId)) {
+    return selectedIds.filter(id => id !== itemId);
+  }
+
+  return [...selectedIds, itemId];
+}
+
+function setGroupSelection(selectedIds, items, isSelected) {
+  const itemIds = items.map(item => item.id);
+
+  if (!isSelected) {
+    return selectedIds.filter(id => !itemIds.includes(id));
+  }
+
+  const next = [...selectedIds];
+  itemIds.forEach(id => {
+    if (!next.includes(id)) next.push(id);
+  });
+  return next;
+}
+
 function HelpModal({ isOpen, onClose }) {
   if (!isOpen) return null;
-  
-  // Create the modal content
-  const modalContent = (
+
+  return createPortal(
     <div className="help-modal-overlay" onClick={onClose}>
-      <div className="help-modal-content" onClick={e => e.stopPropagation()}>
-        <button className="help-close-btn" onClick={onClose}>×</button>
+      <div className="help-modal-content" onClick={event => event.stopPropagation()}>
+        <button className="help-close-btn" onClick={onClose} aria-label="Close help">×</button>
         <h3>How to Use Chord Boss</h3>
-        
+
         <div className="help-section">
           <h4>Getting Started</h4>
-          <p>Welcome to Chord Boss, a tool to help you learn and practice piano chords!</p>
-          <p>To begin, make sure your MIDI keyboard is connected. Then either:</p>
-          <ul>
-            <li>Select a preset from the dropdown menu, or</li>
-            <li>Customize your training using the settings in the sidebar</li>
-          </ul>
-          <p>Click the <strong>Start</strong> button when you're ready to begin.</p>
+          <p>Welcome to Chord Boss, a tool to help you learn and practice piano chords.</p>
+          <p>Connect your MIDI keyboard, pick a preset or customize the sidebar settings, then start a session.</p>
         </div>
-        
+
         <div className="help-section">
           <h4>Session Settings</h4>
           <ul>
-            <li><strong>Q:</strong> Number of questions in your practice session</li>
-            <li><strong>Diff:</strong> Difficulty level (Practice mode gives unlimited time)</li>
-            <li><strong>Inv:</strong> Inversion mode
-              <ul>
-                <li>No - Play chords in root position only</li>
-                <li>Yes - Play specific inversions as shown</li>
-                <li>Free - Any inversion of the chord is accepted</li>
-              </ul>
-            </li>
-            <li><strong>Delay:</strong> Time between questions</li>
+            <li><strong>Questions:</strong> Number of questions in your practice session.</li>
+            <li><strong>Difficulty:</strong> Practice mode gives unlimited time.</li>
+            <li><strong>Inversions:</strong> Choose root position, prompted inversions, or free inversions.</li>
+            <li><strong>Delay:</strong> Time between questions.</li>
           </ul>
         </div>
-        
+
         <div className="help-section">
           <h4>Chord Types</h4>
           <p>Select which chord types you want to practice:</p>
@@ -52,95 +132,175 @@ function HelpModal({ isOpen, onClose }) {
           </ul>
           <p>Use the <strong>Clear All</strong> button to deselect all chord types.</p>
         </div>
-        
+
         <div className="help-section">
           <h4>Playing the Game</h4>
-          <p>When a chord appears on screen:</p>
           <ol>
-            <li>Read the chord name and any inversion indicator</li>
-            <li>Play the chord on your MIDI keyboard</li>
-            <li>If correct, you'll see a green confirmation</li>
-            <li>If incorrect, you can try again until time runs out</li>
+            <li>Read the chord name and inversion indicator.</li>
+            <li>Play the chord on your MIDI keyboard.</li>
+            <li>Correct answers advance the session; incorrect answers can be retried until time runs out.</li>
           </ol>
-          <p>In Practice mode, there's no time limit, so you can take your time learning each chord.</p>
         </div>
-        
+
         <div className="help-section">
           <h4>Tips</h4>
           <ul>
-            <li>Start with the Basic Triads preset if you're new to piano chords</li>
-            <li>Use Practice mode to learn new chord types without pressure</li>
-            <li>Gradually increase difficulty as you improve</li>
-            <li>Toggle between light and dark keyboard modes using the button above the keyboard</li>
+            <li>Start with the Basic Triads preset if you're new to piano chords.</li>
+            <li>Use Practice mode to learn new chord types without pressure.</li>
+            <li>Gradually increase difficulty as you improve.</li>
+            <li>Toggle between light and dark keyboard modes using the button above the keyboard.</li>
           </ul>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
-  
-  // Use createPortal to render the modal at the document body level
-  // This ensures it's outside any stacking contexts that might affect z-index
-  return createPortal(modalContent, document.body);
 }
 
-// Sidebar Component
+function CollapsibleSelectionGroup({
+  group,
+  isOpen,
+  onToggleOpen,
+  selectedIds,
+  onToggleItem,
+  onSetGroupSelection
+}) {
+  const summary = getSelectionSummary(group.items, selectedIds);
+  const allSelected = group.items.every(item => selectedIds.includes(item.id));
+
+  return (
+    <section className={`selection-group ${isOpen ? 'is-open' : ''}`}>
+      <button
+        type="button"
+        className="selection-group-header"
+        onClick={onToggleOpen}
+        aria-expanded={isOpen}
+      >
+        <span className="selection-group-title">{group.name}</span>
+        <span className="selection-group-meta">{summary}</span>
+        <span className="selection-group-chevron">{isOpen ? '▼' : '▶'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="selection-group-content">
+          <label className="select-all-switch">
+            <input
+              type="checkbox"
+              checked={allSelected}
+              onChange={event => onSetGroupSelection(event.target.checked)}
+            />
+            <span className="select-all-label">All</span>
+          </label>
+          <div
+            className="chip-grid"
+            style={{ '--chip-columns': group.columns }}
+          >
+            {group.items.map(item => (
+              <button
+                key={item.id}
+                type="button"
+                className={`chip-toggle ${selectedIds.includes(item.id) ? 'active' : ''}`}
+                onClick={() => onToggleItem(item.id)}
+                title={item.title}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  
+  const [openChordGroups, setOpenChordGroups] = useState({
+    triads: true,
+    sixths: false,
+    sevenths: false,
+    ninths: false
+  });
+  const [openProgressionGroups, setOpenProgressionGroups] = useState({
+    simple: true,
+    intermediate: false,
+    complex: false
+  });
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  const updateSettings = updates => setSettings({ ...settings, ...updates });
+  const selectedChordTypes = settings.chordTypes || [];
+  const selectedProgressions = settings.selectedProgressions || [];
+
+  const setDifficulty = difficulty => {
+    const nextSettings = { ...settings, difficulty };
+    setSettings(nextSettings);
+    localStorage.setItem('chordTrainerSettings', JSON.stringify(nextSettings));
+  };
+
+  const setInversionMode = inversionMode => {
+    const nextSettings = {
+      ...settings,
+      inversionMode,
+      allowInversions: inversionMode === 'inversions'
+        ? true
+        : inversionMode === 'free'
+          ? false
+          : settings.allowInversions
+    };
+    setSettings(nextSettings);
+    localStorage.setItem('chordTrainerSettings', JSON.stringify(nextSettings));
+  };
+
   return (
-    <div className="sidebar">
+    <aside className="sidebar">
       <div className="sidebar-header">
         <h3>Settings</h3>
-        <button 
-          className="help-button" 
+        <button
+          type="button"
+          className="button button-secondary help-button"
           onClick={() => setIsHelpOpen(true)}
           title="View help and tutorial"
         >
           Help
         </button>
       </div>
-      
+
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
-      
-      {/* MIDI Device Selection */}
-      <div className="settings-group">
-        {midiStatus && (
-          <div style={{ margin: '0.5rem 0', padding: '0.5rem', background: '#333', borderRadius: '4px' }}>
-            <label>
-              MIDI Input: 
-              <select 
-                value={midiStatus.selectedInput || MidiUtils.ALL_INPUTS_VALUE} 
-                onChange={midiStatus.handleInputChange}
-                style={{ marginLeft: '0.5rem', padding: '0.25rem', background: '#222', color: 'white', border: '1px solid #444' }}
-              >
-                <option value="all">All inputs</option>
-                {midiStatus.midiInputs.map(input => (
-                  <option key={input.id} value={input.id}>
-                    {input.name || input.manufacturer || 'Unknown Device'}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        )}
-      </div>
-      
-      <div className="settings-panel">
-        {/* Preset Selector - Pop-out style */}
-        <div className="settings-group" style={{ marginBottom: '0.5rem', width: '100%' }}>
-          <PresetSelector onSelectPreset={handleSelectPreset} />
-        </div>
-        
-        {/* Session Settings - Compact Layout */}
-        <div className="settings-group">
-          <h4 style={{ marginBottom: '0.1rem', fontSize: '0.9rem' }}>Session</h4>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center' }}>
-            <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
-            Q: 
-            <select 
+
+      {midiStatus && (
+        <section className="settings-group midi-settings">
+          <label className="field-row">
+            <span>MIDI Input</span>
+            <select
+              className="form-select"
+              value={midiStatus.selectedInput || MidiUtils.ALL_INPUTS_VALUE}
+              onChange={midiStatus.handleInputChange}
+            >
+              <option value="all">All inputs</option>
+              {midiStatus.midiInputs.map(input => (
+                <option key={input.id} value={input.id}>
+                  {input.name || input.manufacturer || 'Unknown Device'}
+                </option>
+              ))}
+            </select>
+          </label>
+        </section>
+      )}
+
+      <section className="settings-group preset-settings">
+        <PresetSelector onSelectPreset={handleSelectPreset} />
+      </section>
+
+      <section className="settings-group session-settings">
+        <h4>Session</h4>
+        <div className="session-control-grid">
+          <label className="field-stack">
+            <span>Questions</span>
+            <select
+              className="form-select"
               value={settings.questionCount}
-              onChange={e => setSettings({...settings, questionCount: parseInt(e.target.value)})}
-              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
+              onChange={event => updateSettings({ questionCount: parseInt(event.target.value, 10) })}
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -148,20 +308,13 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
               <option value="20">20</option>
             </select>
           </label>
-          
-          {/* Timer option removed as it's now controlled by difficulty */}
-          
-          <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
-            Diff: 
-            <select 
+
+          <label className="field-stack">
+            <span>Difficulty</span>
+            <select
+              className="form-select"
               value={settings.difficulty}
-              onChange={e => {
-                // Use the updateSettings function to ensure localStorage is updated
-                const newSettings = {...settings, difficulty: e.target.value};
-                setSettings(newSettings);
-                localStorage.setItem('chordTrainerSettings', JSON.stringify(newSettings));
-              }}
-              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
+              onChange={event => setDifficulty(event.target.value)}
             >
               <option value="practice">Practice (∞)</option>
               <option value="easy">Easy (12s)</option>
@@ -169,964 +322,294 @@ function Sidebar({ settings, setSettings, midiStatus, handleSelectPreset }) {
               <option value="hard">Hard (3s)</option>
             </select>
           </label>
-          
-          {/* Inversion Mode Selector */}
-          <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
-            Inv: 
-            <select 
+
+          <label className="field-stack">
+            <span>Inversions</span>
+            <select
+              className="form-select"
               value={settings.inversionMode}
-              onChange={e => {
-                // Update inversion mode and ensure localStorage is updated
-                const newSettings = {
-                  ...settings, 
-                  inversionMode: e.target.value,
-                  // If switching to 'inversions' mode, ensure allowInversions is true
-                  // If switching to 'free' mode, ensure allowInversions is false
-                  allowInversions: e.target.value === 'inversions' ? true : 
-                                  e.target.value === 'free' ? false : 
-                                  settings.allowInversions
-                };
-                setSettings(newSettings);
-                localStorage.setItem('chordTrainerSettings', JSON.stringify(newSettings));
-              }}
-              style={{ marginLeft: '0.15rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
+              onChange={event => setInversionMode(event.target.value)}
             >
               <option value="root">No</option>
               <option value="inversions">Yes</option>
               <option value="free">Free</option>
             </select>
           </label>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
-            <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center' }}>
-              Delay: <span style={{ minWidth: '1.8rem', textAlign: 'right' }}>{(settings.questionDelay / 1000).toFixed(1)}s</span>
-            </label>
-            {/* Custom slider implementation */}
-            <div 
-              style={{
-                width: '60px',
-                position: 'relative',
-                height: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                margin: '0 0.1rem'
-              }}
-            >
-              {/* Slider track */}
-              <div
-                style={{
-                  width: '100%',
-                  height: '6px',
-                  backgroundColor: '#222',
-                  borderRadius: '4px',
-                  position: 'absolute'
-                }}
-                onClick={e => {
-                  // Calculate position click within track
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const pos = (e.clientX - rect.left) / rect.width;
-                  const newValue = Math.round((pos * 3000) / 100) * 100; // Step of 100
-                  setSettings({...settings, questionDelay: newValue});
-                }}
-              ></div>
-              
-              {/* Slider thumb */}
-              <div
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: '#bb86fc', /* Purple to match theme */
-                  position: 'absolute',
-                  left: `${(settings.questionDelay / 3000) * 100}%`,
-                  transform: 'translateX(-50%)',
-                  cursor: 'pointer',
-                  boxShadow: '0 0 2px rgba(0,0,0,0.3)'
-                }}
-                onMouseDown={e => {
-                  e.preventDefault();
-                  
-                  // Get initial position
-                  const startX = e.clientX;
-                  const startValue = settings.questionDelay;
-                  const parentRect = e.currentTarget.parentElement.getBoundingClientRect();
-                  const trackWidth = parentRect.width;
-                  
-                  // Handle mouse move
-                  const handleMouseMove = moveEvent => {
-                    const deltaX = moveEvent.clientX - startX;
-                    const deltaRatio = deltaX / trackWidth;
-                    const deltaValue = deltaRatio * 3000;
-                    let newValue = Math.round((startValue + deltaValue) / 100) * 100; // Step of 100
-                    
-                    // Clamp value
-                    newValue = Math.max(0, Math.min(3000, newValue));
-                    
-                    setSettings({...settings, questionDelay: newValue});
-                  };
-                  
-                  // Handle mouse up
-                  const handleMouseUp = () => {
-                    document.removeEventListener('mousemove', handleMouseMove);
-                    document.removeEventListener('mouseup', handleMouseUp);
-                  };
-                  
-                  // Add document-level event listeners
-                  document.addEventListener('mousemove', handleMouseMove);
-                  document.addEventListener('mouseup', handleMouseUp);
-                }}
-              ></div>
-            </div>
-          </div>
         </div>
-      </div>
-      
-      {/* Tabs for Chord Types and Progressions */}
-      <div className="settings-group chord-selection">
-        <div className="sidebar-tabs">
-          <button 
+
+        <label className="delay-control">
+          <span>Delay</span>
+          <strong>{(settings.questionDelay / 1000).toFixed(1)}s</strong>
+          <input
+            type="range"
+            min="0"
+            max="3000"
+            step="100"
+            value={settings.questionDelay}
+            onChange={event => updateSettings({ questionDelay: parseInt(event.target.value, 10) })}
+          />
+        </label>
+      </section>
+
+      <section className="settings-group selection-panel">
+        <div className="sidebar-tabs" role="tablist" aria-label="Training mode">
+          <button
+            type="button"
             className={`sidebar-tab ${!settings.useProgressions ? 'active' : ''}`}
-            onClick={() => setSettings({...settings, useProgressions: false})}
+            onClick={() => updateSettings({ useProgressions: false })}
           >
             Qualities
           </button>
-          <button 
+          <button
+            type="button"
             className={`sidebar-tab ${settings.useProgressions ? 'active' : ''}`}
-            onClick={() => setSettings({...settings, useProgressions: true})}
+            onClick={() => updateSettings({ useProgressions: true })}
           >
             Progressions
           </button>
         </div>
-        
-        {/* Key Selector - Only visible when progressions are enabled */}
+
         {settings.useProgressions && (
-          <div className="key-selector" style={{ marginTop: '0.5rem', marginBottom: '0.5rem' }}>
-            <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              Key:
+          <div className="key-selector">
+            <label className="field-row">
+              <span>Key Mode</span>
               <select
+                className="form-select"
                 value={settings.keyMode}
-                onChange={e => {
-                  const newKeyMode = e.target.value;
-                  const newSettings = {
-                    ...settings,
-                    keyMode: newKeyMode
-                  };
-                  // If switching to fixed key, set a default key if not already set
-                  if (newKeyMode === 'fixed' && !settings.fixedKey) {
-                    newSettings.fixedKey = 'C';
-                  }
-                  setSettings(newSettings);
+                onChange={event => {
+                  const keyMode = event.target.value;
+                  updateSettings({
+                    keyMode,
+                    fixedKey: keyMode === 'fixed' && !settings.fixedKey ? 'C' : settings.fixedKey
+                  });
                 }}
-                style={{ marginLeft: '0.5rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
               >
                 <option value="random">Random Key</option>
                 <option value="fixed">Fixed Key</option>
               </select>
             </label>
-            
-            {/* Fixed Key Selector - Only visible when fixed key is selected */}
+
             {settings.keyMode === 'fixed' && (
-              <div style={{ marginTop: '0.5rem' }}>
-                <label style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  Fixed Key:
-                  <select
-                    value={settings.fixedKey || 'C'}
-                    onChange={e => setSettings({...settings, fixedKey: e.target.value})}
-                    style={{ marginLeft: '0.5rem', padding: '0.15rem', background: '#222', color: 'white', border: '1px solid #444', fontSize: '0.85rem' }}
-                  >
-                    {['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].map(key => (
-                      <option key={key} value={key}>{key}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <label className="field-row">
+                <span>Fixed Key</span>
+                <select
+                  className="form-select"
+                  value={settings.fixedKey || 'C'}
+                  onChange={event => updateSettings({ fixedKey: event.target.value })}
+                >
+                  {KEY_OPTIONS.map(key => (
+                    <option key={key} value={key}>{key}</option>
+                  ))}
+                </select>
+              </label>
             )}
           </div>
         )}
-        
-        {/* Chord Qualities Tab Content */}
-        {!settings.useProgressions && (
-          <>
-            <h4 style={{ marginBottom: '0.25rem', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Chord Types
-              {settings.chordTypes.length > 0 && (
-                <button 
-                  className="clear-all-btn" 
-                  onClick={() => setSettings({...settings, chordTypes: []})}
+
+        {!settings.useProgressions ? (
+          <div className="selection-section">
+            <div className="selection-section-header">
+              <h4>Chord Types</h4>
+              {selectedChordTypes.length > 0 && (
+                <button
+                  type="button"
+                  className="clear-all-btn"
+                  onClick={() => updateSettings({ chordTypes: [] })}
                   title="Clear all selected chord types"
-                  style={{ fontSize: '0.75rem', padding: '0.1rem 0.3rem' }}
                 >
                   Clear All
                 </button>
               )}
-            </h4>
-          </>  
-        )}
-        
-        {/* Progressions Tab Content */}
-        {settings.useProgressions && (
-          <div className="progression-selection">
-            <h4 style={{ marginBottom: '0.25rem', fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Progression Types
-              {(settings.selectedProgressions && settings.selectedProgressions.length > 0) && (
-                <button 
-                  className="clear-all-btn" 
-                  onClick={() => setSettings({...settings, selectedProgressions: []})}
-                  title="Clear all selected progression types"
-                  style={{ fontSize: '0.75rem', padding: '0.1rem 0.3rem' }}
-                >
-                  Clear All
-                </button>
-              )}
-            </h4>
-            
-            {/* Simple Progressions */}
-            <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
-              <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-                <span>Simple</span>
-              </div>
-              
-              <div className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-                <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.25rem' }}>
-                  {Presets.PROGRESSION_COLLECTIONS[0].progressions.map(category => (
-                    <button 
-                      key={category.id}
-                      className={`chord-type-toggle ${settings.selectedProgressions && settings.selectedProgressions.includes(category.id) ? 'active' : ''}`}
-                      onClick={() => {
-                        const newSelected = [...(settings.selectedProgressions || [])];
-                        if (newSelected.includes(category.id)) {
-                          const index = newSelected.indexOf(category.id);
-                          newSelected.splice(index, 1);
-                        } else {
-                          newSelected.push(category.id);
-                        }
-                        setSettings({...settings, selectedProgressions: newSelected});
-                      }}
-                      style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
-            
-            {/* Intermediate Progressions */}
-            <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
-              <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-                <span>Intermediate</span>
-              </div>
-              
-              <div className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-                <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.25rem' }}>
-                  {Presets.PROGRESSION_COLLECTIONS[1].progressions.map(category => (
-                    <button 
-                      key={category.id}
-                      className={`chord-type-toggle ${settings.selectedProgressions && settings.selectedProgressions.includes(category.id) ? 'active' : ''}`}
-                      onClick={() => {
-                        const newSelected = [...(settings.selectedProgressions || [])];
-                        if (newSelected.includes(category.id)) {
-                          const index = newSelected.indexOf(category.id);
-                          newSelected.splice(index, 1);
-                        } else {
-                          newSelected.push(category.id);
-                        }
-                        setSettings({...settings, selectedProgressions: newSelected});
-                      }}
-                      style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Complex Progressions */}
-            <div className="chord-family-accordion" style={{ marginBottom: '0.3rem' }}>
-              <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-                <span>Complex</span>
-              </div>
-              
-              <div className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-                <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.25rem' }}>
-                  {Presets.PROGRESSION_COLLECTIONS[2].progressions.map(category => (
-                    <button 
-                      key={category.id}
-                      className={`chord-type-toggle ${settings.selectedProgressions && settings.selectedProgressions.includes(category.id) ? 'active' : ''}`}
-                      onClick={() => {
-                        const newSelected = [...(settings.selectedProgressions || [])];
-                        if (newSelected.includes(category.id)) {
-                          const index = newSelected.indexOf(category.id);
-                          newSelected.splice(index, 1);
-                        } else {
-                          newSelected.push(category.id);
-                        }
-                        setSettings({...settings, selectedProgressions: newSelected});
-                      }}
-                      style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Triads Section - Compact Layout */}
-        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem', display: settings.useProgressions ? 'none' : 'block' }}>
-          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-            <span>Triads</span>
-            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
-              <input 
-                type="checkbox" 
-                checked={['major', 'minor', 'diminished', 'augmented', 'sus2', 'sus4'].every(type => 
-                  settings.chordTypes.includes(type)
-                )}
-                onChange={e => {
-                  const triadTypes = ['major', 'minor', 'diminished', 'augmented', 'sus2', 'sus4'];
-                  let newTypes = [...settings.chordTypes];
-                  
-                  if (e.target.checked) {
-                    // Add all triad types that aren't already included
-                    triadTypes.forEach(type => {
-                      if (!newTypes.includes(type)) newTypes.push(type);
-                    });
-                  } else {
-                    // Remove all triad types
-                    newTypes = newTypes.filter(type => !triadTypes.includes(type));
-                  }
-                  
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ margin: '0 0.2rem 0 0' }}
+
+            {CHORD_GROUPS.map(group => (
+              <CollapsibleSelectionGroup
+                key={group.id}
+                group={group}
+                isOpen={openChordGroups[group.id]}
+                selectedIds={selectedChordTypes}
+                onToggleOpen={() => setOpenChordGroups({
+                  ...openChordGroups,
+                  [group.id]: !openChordGroups[group.id]
+                })}
+                onToggleItem={itemId => updateSettings({
+                  chordTypes: toggleItem(selectedChordTypes, itemId)
+                })}
+                onSetGroupSelection={isSelected => updateSettings({
+                  chordTypes: setGroupSelection(selectedChordTypes, group.items, isSelected)
+                })}
               />
-              <span className="select-all-label">All</span>
-            </label>
+            ))}
           </div>
-          
-          <div id="triads-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('major') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('major')) {
-                    const index = newTypes.indexOf('major');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('major');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Major
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('minor') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('minor')) {
-                    const index = newTypes.indexOf('minor');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('minor');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Minor
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('diminished') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('diminished')) {
-                    const index = newTypes.indexOf('diminished');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('diminished');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Dim
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('augmented') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('augmented')) {
-                    const index = newTypes.indexOf('augmented');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('augmented');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Aug
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('sus2') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('sus2')) {
-                    const index = newTypes.indexOf('sus2');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('sus2');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Sus2
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('sus4') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('sus4')) {
-                    const index = newTypes.indexOf('sus4');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('sus4');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                Sus4
-              </button>
+        ) : (
+          <div className="selection-section progression-selection">
+            <div className="selection-section-header">
+              <h4>Progression Types</h4>
+              {selectedProgressions.length > 0 && (
+                <button
+                  type="button"
+                  className="clear-all-btn"
+                  onClick={() => updateSettings({ selectedProgressions: [] })}
+                  title="Clear all selected progression types"
+                >
+                  Clear All
+                </button>
+              )}
             </div>
+
+            {PROGRESSION_GROUPS.map(group => (
+              <CollapsibleSelectionGroup
+                key={group.id}
+                group={group}
+                isOpen={openProgressionGroups[group.id]}
+                selectedIds={selectedProgressions}
+                onToggleOpen={() => setOpenProgressionGroups({
+                  ...openProgressionGroups,
+                  [group.id]: !openProgressionGroups[group.id]
+                })}
+                onToggleItem={itemId => updateSettings({
+                  selectedProgressions: toggleItem(selectedProgressions, itemId)
+                })}
+                onSetGroupSelection={isSelected => updateSettings({
+                  selectedProgressions: setGroupSelection(selectedProgressions, group.items, isSelected)
+                })}
+              />
+            ))}
           </div>
-        </div>
-        
-        {/* 6th Chords Category - Compact Layout */}
-        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem', display: settings.useProgressions ? 'none' : 'block' }}>
-          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-            <span>6th Chords</span>
-            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
+        )}
+      </section>
+
+      <section className="settings-group advanced-settings">
+        <button
+          type="button"
+          className="advanced-toggle"
+          onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+          aria-expanded={isAdvancedOpen}
+        >
+          <span>Advanced</span>
+          <span>{isAdvancedOpen ? '▼' : '▶'}</span>
+        </button>
+
+        {isAdvancedOpen && (
+          <div className="advanced-content">
+            <label className="checkbox-row">
               <input
                 type="checkbox"
-                checked={['6','m6'].every(type => settings.chordTypes.includes(type))}
-                onChange={e => {
-                  const sixthTypes = ['6','m6'];
-                  let newTypes = [...settings.chordTypes];
-                  if (e.target.checked) {
-                    sixthTypes.forEach(type => {
-                      if (!newTypes.includes(type)) newTypes.push(type);
-                    });
-                  } else {
-                    newTypes = newTypes.filter(type => !sixthTypes.includes(type));
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ margin: '0 0.2rem 0 0' }}
+                checked={settings.optionalFifth}
+                onChange={event => updateSettings({ optionalFifth: event.target.checked })}
               />
-              <span className="select-all-label">All</span>
+              <span>Make 5th Optional for 7th+ chords</span>
+            </label>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={settings.muteAudio || false}
+                onChange={event => updateSettings({ muteAudio: event.target.checked })}
+              />
+              <span>Mute audio</span>
             </label>
           </div>
-          <div id="sixths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
-              {/* Major 6 */}
-              <button
-                className={`chord-type-toggle ${settings.chordTypes.includes('6') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('6')) {
-                    newTypes.splice(newTypes.indexOf('6'),1);
-                  } else {
-                    newTypes.push('6');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Major 3rd, Perfect 5th, Major 6th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                6
-              </button>
-              {/* Minor 6 */}
-              <button
-                className={`chord-type-toggle ${settings.chordTypes.includes('m6') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('m6')) {
-                    newTypes.splice(newTypes.indexOf('m6'),1);
-                  } else {
-                    newTypes.push('m6');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Perfect 5th, Major 6th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                m6
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 7th Chords Section - Compact Layout */}
-        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem', display: settings.useProgressions ? 'none' : 'block' }}>
-          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-            <span>7th Chords</span>
-            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
-              <input 
-                type="checkbox" 
-                checked={['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7'].every(type => 
-                  settings.chordTypes.includes(type)
-                )}
-                onChange={e => {
-                  const seventhTypes = ['major7', 'dominant7', 'minor7', 'diminished7', 'halfDiminished7', 'minorMajor7'];
-                  let newTypes = [...settings.chordTypes];
-                  
-                  if (e.target.checked) {
-                    // Add all 7th chord types that aren't already included
-                    seventhTypes.forEach(type => {
-                      if (!newTypes.includes(type)) newTypes.push(type);
-                    });
-                  } else {
-                    // Remove all 7th chord types
-                    newTypes = newTypes.filter(type => !seventhTypes.includes(type));
-                  }
-                  
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ margin: '0 0.2rem 0 0' }}
-              />
-              <span className="select-all-label">All</span>
-            </label>
-          </div>
-          
-          <div id="sevenths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('major7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('major7')) {
-                    const index = newTypes.indexOf('major7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('major7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Major 3rd, Perfect 5th, Major 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                maj7
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('dominant7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('dominant7')) {
-                    const index = newTypes.indexOf('dominant7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('dominant7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Major 3rd, Perfect 5th, Minor 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                7
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('minor7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('minor7')) {
-                    const index = newTypes.indexOf('minor7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('minor7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Perfect 5th, Minor 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                m7
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('diminished7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('diminished7')) {
-                    const index = newTypes.indexOf('diminished7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('diminished7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Diminished 5th, Diminished 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                dim7
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('halfDiminished7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('halfDiminished7')) {
-                    const index = newTypes.indexOf('halfDiminished7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('halfDiminished7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Diminished 5th, Minor 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                m7b5
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('minorMajor7') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('minorMajor7')) {
-                    const index = newTypes.indexOf('minorMajor7');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('minorMajor7');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Perfect 5th, Major 7th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                mM7
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* 9th Chords Section - Compact Layout */}
-        <div className="chord-family-accordion" style={{ marginBottom: '0.3rem', display: settings.useProgressions ? 'none' : 'block' }}>
-          <div className="chord-family-header" style={{ padding: '0.2rem 0.3rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
-            <span>9th Chords</span>
-            <label className="select-all-switch" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}>
-              <input 
-                type="checkbox" 
-                checked={['dominant9', 'major9', 'minor9', '6(9)', 'm6(9)'].every(type => 
-                  settings.chordTypes.includes(type)
-                )}
-                onChange={e => {
-                  const ninthTypes = ['dominant9', 'major9', 'minor9', 'minorMajor9', '6(9)', 'm6(9)'];
-                  let newTypes = [...settings.chordTypes];
-                  
-                  if (e.target.checked) {
-                    // Add all 9th chord types that aren't already included
-                    ninthTypes.forEach(type => {
-                      if (!newTypes.includes(type)) newTypes.push(type);
-                    });
-                  } else {
-                    // Remove all 9th chord types
-                    newTypes = newTypes.filter(type => !ninthTypes.includes(type));
-                  }
-                  
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                style={{ margin: '0 0.2rem 0 0' }}
-              />
-              <span className="select-all-label">All</span>
-            </label>
-          </div>
-          
-          <div id="ninths-content" className="chord-family-content" style={{display: 'block', marginTop: '0.2rem'}}>
-            <div className="chord-type-toggles" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.25rem' }}>
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('dominant9') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('dominant9')) {
-                    const index = newTypes.indexOf('dominant9');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('dominant9');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Major 3rd, Perfect 5th, Minor 7th, Major 9th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                9
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('major9') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('major9')) {
-                    const index = newTypes.indexOf('major9');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('major9');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Major 3rd, Perfect 5th, Major 7th, Major 9th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                maj9
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('minor9') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('minor9')) {
-                    const index = newTypes.indexOf('minor9');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('minor9');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Perfect 5th, Minor 7th, Major 9th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                m9
-              </button>
-              
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('minorMajor9') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('minorMajor9')) {
-                    const index = newTypes.indexOf('minorMajor9');
-                    newTypes.splice(index, 1);
-                  } else {
-                    newTypes.push('minorMajor9');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Root, Minor 3rd, Perfect 5th, Major 7th, Major 9th"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                mM9
-              </button>
-              {/* 6(9) */}
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('6(9)') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('6(9)')) {
-                    newTypes.splice(newTypes.indexOf('6(9)'),1);
-                  } else {
-                    newTypes.push('6(9)');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Major 6 add 9"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                6(9)
-              </button>
-              {/* m6(9) */}
-              <button 
-                className={`chord-type-toggle ${settings.chordTypes.includes('m6(9)') ? 'active' : ''}`}
-                onClick={() => {
-                  const newTypes = [...settings.chordTypes];
-                  if (newTypes.includes('m6(9)')) {
-                    newTypes.splice(newTypes.indexOf('m6(9)'),1);
-                  } else {
-                    newTypes.push('m6(9)');
-                  }
-                  setSettings({...settings, chordTypes: newTypes});
-                }}
-                title="Minor 6 add 9"
-                style={{ padding: '0.15rem 0.1rem', fontSize: '0.8rem' }}
-              >
-                m6(9)
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-     </div> {/* Close settings-panel */}
-      
-      <div className="settings-group" style={{ marginTop: '0.3rem' }}>
-        <h4 style={{ fontSize: '0.9rem', margin: '0.2rem 0', padding: '0.2rem 0' }}>Options</h4>
-        {/* Inversion checkbox removed - replaced by inversion mode selector */}
-        <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={settings.optionalFifth}
-              onChange={e => setSettings({ ...settings, optionalFifth: e.target.checked })}
-              style={{ margin: '0 0.3rem 0 0' }}
-            />
-            Make 5th Optional for 7th+ chords
-          </label>
-        </div>
-        <div style={{ marginTop: '0.3rem', fontSize: '0.85rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={settings.muteAudio || false}
-              onChange={e => setSettings({ ...settings, muteAudio: e.target.checked })}
-              style={{ margin: '0 0.3rem 0 0' }}
-            />
-            Mute audio
-          </label>
-        </div>
-      </div>
-    </div>
+        )}
+      </section>
+    </aside>
   );
 }
 
-// Preset Selector Component
 function PresetSelector({ onSelectPreset }) {
   const [expandedCollection, setExpandedCollection] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const popoutRef = useRef(null);
   const buttonRef = useRef(null);
   const [popoutPosition, setPopoutPosition] = useState({ top: 0, left: 0 });
-  
-  // Toggle collection expansion
-  const toggleCollection = (collectionId) => {
+
+  const toggleCollection = collectionId => {
     setExpandedCollection(expandedCollection === collectionId ? null : collectionId);
   };
-  
-  // Update popout position when button position changes or when opening
+
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setPopoutPosition({
         top: rect.top,
-        left: rect.right + 5 // 5px offset from the button
+        left: rect.right + 5
       });
     }
   }, [isOpen]);
-  
-  // Close popout when clicking outside
+
   useEffect(() => {
     function handleClickOutside(event) {
-      if (popoutRef.current && !popoutRef.current.contains(event.target) && 
-          buttonRef.current && !buttonRef.current.contains(event.target)) {
+      if (
+        popoutRef.current &&
+        !popoutRef.current.contains(event.target) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
       }
     }
-    
+
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
-    
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen]);
-  
+
   return (
-    <div className="preset-selector" style={{ width: '100%' }}>
-      <button 
+    <div className="preset-selector">
+      <button
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)} 
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          padding: '0.3rem 0.5rem',
-          fontSize: '0.85rem',
-          backgroundColor: '#333',
-          color: 'white',
-          border: '1px solid #444',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          margin: '0 auto'
-        }}
+        type="button"
+        className="preset-trigger"
+        onClick={() => setIsOpen(!isOpen)}
       >
         <span>Preset Progressions</span>
-        <span>{isOpen ? '▼' : '►'}</span>
+        <span>{isOpen ? '▼' : '▶'}</span>
       </button>
-      
+
       {isOpen && (
-        <div 
+        <div
           ref={popoutRef}
+          className="preset-popout"
           style={{
-            position: 'fixed',
             top: `${popoutPosition.top}px`,
-            left: `${popoutPosition.left}px`,
-            width: '220px',
-            backgroundColor: '#222',
-            border: '1px solid #444',
-            borderRadius: '4px',
-            padding: '0.5rem',
-            zIndex: 1000,
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+            left: `${popoutPosition.left}px`
           }}
         >
-          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem' }}>Preset Progressions</h4>
-          
+          <h4>Preset Progressions</h4>
+
           {Presets.COLLECTIONS.map(collection => (
-            <div key={collection.id} className="preset-collection" style={{ marginBottom: '0.5rem' }}>
-              <div 
-                className="preset-collection-header" 
+            <div key={collection.id} className="preset-collection">
+              <button
+                type="button"
+                className="preset-collection-header"
                 onClick={() => toggleCollection(collection.id)}
-                style={{
-                  padding: '0.25rem',
-                  backgroundColor: '#333',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: '0.85rem'
-                }}
               >
-                {collection.name}
+                <span>{collection.name}</span>
                 <span className="expand-icon">
-                  {expandedCollection === collection.id ? '▼' : '►'}
+                  {expandedCollection === collection.id ? '▼' : '▶'}
                 </span>
-              </div>
-              
+              </button>
+
               {expandedCollection === collection.id && (
-                <div className="preset-list" style={{ marginTop: '0.25rem' }}>
+                <div className="preset-list">
                   {collection.presets.map(preset => (
-                    <div 
-                      key={preset.id} 
+                    <button
+                      key={preset.id}
+                      type="button"
                       className="preset-item"
                       onClick={() => {
                         onSelectPreset(preset.id);
-                        setIsOpen(false); // Close after selection
-                      }}
-                      style={{
-                        padding: '0.25rem',
-                        cursor: 'pointer',
-                        borderRadius: '3px',
-                        marginBottom: '0.25rem',
-                        ':hover': { backgroundColor: '#444' }
+                        setIsOpen(false);
                       }}
                     >
-                      <div className="preset-name" style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{preset.name}</div>
-                      <div className="preset-description" style={{ fontSize: '0.75rem', color: '#aaa' }}>{preset.description}</div>
-                    </div>
+                      <span className="preset-name">{preset.name}</span>
+                      <span className="preset-description">{preset.description}</span>
+                    </button>
                   ))}
                 </div>
               )}
@@ -1138,7 +621,6 @@ function PresetSelector({ onSelectPreset }) {
   );
 }
 
-// Export the Sidebar component to make it available to other files
 if (typeof window !== 'undefined') {
   window.Sidebar = Sidebar;
 }

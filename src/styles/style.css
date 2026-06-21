@@ -1,10 +1,19 @@
-/* Chord Boss - Dark Theme */
+/* Chord Boss - charcoal, pumpkin, and teal theme */
 :root {
-  --bg: #111;
-  --surface: #1e1e1e;
-  --text-primary: #eaeaea;
-  --accent: #4cc9f0;
-  --accent-hover: #6ae5ff;
+  --color-bg: #0b0d0e;
+  --color-sidebar: #131617;
+  --color-surface: #191d1f;
+  --color-surface-muted: #202527;
+  --color-border: #2a3033;
+  --color-border-strong: #3a4246;
+  --color-text: #f2eee8;
+  --color-text-muted: #a9ada8;
+  --color-pumpkin: #d8792c;
+  --color-pumpkin-hover: #ef8c3a;
+  --color-teal: #3eb7a7;
+  --color-danger: #d95b4f;
+  --color-success: #57b36a;
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.28);
 }
 
 * {
@@ -14,12 +23,15 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html,
+body,
+#root {
+  min-height: 100vh;
+}
+
 body {
-  /* Restored dark purple background */
-  background-color: #0c0a12;
-  background-image: linear-gradient(to bottom, #0f0c16, #0a080f);
-  color: var(--text-primary);
-  height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
 }
@@ -28,27 +40,60 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: transparent;
 }
 
-/* Simple button styling */
+button,
+select,
+input {
+  font: inherit;
+}
+
 button {
-  background: var(--accent);
-  border: none;
-  color: #000;
-  padding: 0.75rem 1.5rem;
-  margin: 0.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background 0.2s ease;
 }
 
-button:hover {
-  background: var(--accent-hover);
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
 }
 
-/* Center content utility */
+.button {
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  padding: 0.45rem 0.75rem;
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+}
+
+.button:hover {
+  border-color: var(--color-teal);
+}
+
+.button-primary {
+  background: var(--color-pumpkin);
+  border-color: var(--color-pumpkin);
+  color: #1b1008;
+  font-weight: 700;
+}
+
+.button-primary:hover {
+  background: var(--color-pumpkin-hover);
+  border-color: var(--color-pumpkin-hover);
+}
+
+.button-secondary {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.button-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: #fff;
+}
+
 .centered {
   display: flex;
   flex: 1;
