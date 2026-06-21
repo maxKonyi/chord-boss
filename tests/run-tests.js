@@ -129,6 +129,52 @@ test('game reducer applies response-time points before streak multiplier', () =>
   assert.strictEqual(next.score, 116);
 });
 
+test('game reducer tracks highest streak across answer transitions', () => {
+  const { ACTIONS, gameStateReducer, initialState } = window.hooks.__gameStateTest;
+  const first = gameStateReducer(initialState, {
+    type: ACTIONS.CORRECT_ANSWER,
+    payload: { points: 10 }
+  });
+  const second = gameStateReducer({ ...first, streak: 4, highestStreak: 4 }, {
+    type: ACTIONS.CORRECT_ANSWER,
+    payload: { points: 10 }
+  });
+  const wrong = gameStateReducer(second, { type: ACTIONS.WRONG_ANSWER });
+
+  assert.strictEqual(first.highestStreak, 1);
+  assert.strictEqual(second.streak, 5);
+  assert.strictEqual(second.highestStreak, 5);
+  assert.strictEqual(wrong.streak, 0);
+  assert.strictEqual(wrong.highestStreak, 5);
+});
+
+test('game reducer owns transient feedback metadata', () => {
+  const { ACTIONS, gameStateReducer, initialState } = window.hooks.__gameStateTest;
+  const withFeedback = gameStateReducer(initialState, {
+    type: ACTIONS.SET_FEEDBACK,
+    payload: { feedbackType: 'info', feedbackMessage: 'Next question...' }
+  });
+  const cleared = gameStateReducer(withFeedback, { type: ACTIONS.CLEAR_FEEDBACK });
+
+  assert.strictEqual(withFeedback.showFeedback, true);
+  assert.strictEqual(withFeedback.feedbackType, 'info');
+  assert.strictEqual(withFeedback.feedbackMessage, 'Next question...');
+  assert.strictEqual(cleared.showFeedback, false);
+  assert.strictEqual(cleared.feedbackType, null);
+  assert.strictEqual(cleared.feedbackMessage, '');
+});
+
+test('game reducer accepts explicit correct-answer feedback text', () => {
+  const { ACTIONS, gameStateReducer, initialState } = window.hooks.__gameStateTest;
+  const next = gameStateReducer(initialState, {
+    type: ACTIONS.CORRECT_ANSWER,
+    payload: { points: 7, feedbackMessage: 'Correct! +7 points' }
+  });
+
+  assert.strictEqual(next.feedbackType, 'correct');
+  assert.strictEqual(next.feedbackMessage, 'Correct! +7 points');
+});
+
 test('game reducer transitions wrong answer to game over at zero lives', () => {
   const { ACTIONS, gameStateReducer, initialState } = window.hooks.__gameStateTest;
   const state = { ...initialState, state: 'playing', lives: 1, streak: 3, multiplier: 2 };
@@ -203,6 +249,24 @@ test('progression completion records the completed display index', () => {
   });
 
   assert.deepStrictEqual(next.completedChords, [0]);
+});
+
+test('progression chord advancement preserves current feedback metadata', () => {
+  const { ACTIONS, gameStateReducer, initialState } = window.hooks.__gameStateTest;
+  const state = {
+    ...initialState,
+    showFeedback: true,
+    feedbackType: 'correct',
+    feedbackMessage: 'Correct! +10 points'
+  };
+  const next = gameStateReducer(state, {
+    type: ACTIONS.NEXT_CHORD,
+    payload: { chordId: 1 }
+  });
+
+  assert.strictEqual(next.feedbackType, 'correct');
+  assert.strictEqual(next.feedbackMessage, 'Correct! +10 points');
+  assert.strictEqual(next.showFeedback, true);
 });
 
 test('progression helper chooses selected progression and fixed key', () => {

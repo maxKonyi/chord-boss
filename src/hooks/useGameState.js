@@ -31,6 +31,8 @@ const ACTIONS = {
   NEXT_QUESTION: 'nextQuestion',
   GAME_OVER: 'gameOver',
   RESET_GAME: 'resetGame',
+  SET_FEEDBACK: 'setFeedback',
+  CLEAR_FEEDBACK: 'clearFeedback',
   SET_PROCESSING: 'setProcessing',
   CLEAR_PROCESSING: 'clearProcessing'
 };
@@ -43,6 +45,7 @@ const initialState = {
   lives: 3,
   score: 0,
   streak: 0,
+  highestStreak: 0,
   multiplier: 1,
   questionCount: 0,
   totalAttempts: 0,
@@ -71,17 +74,20 @@ function gameStateReducer(state, action) {
       const newMultiplier = Math.min(4, 1 + Math.floor(newStreak / 5));
       const basePoints = Number.isFinite(action.payload?.points) ? action.payload.points : 10;
       const scoreIncrease = basePoints * newMultiplier;
+      const feedbackMessage = action.payload?.feedbackMessage ||
+        `Correct! +${scoreIncrease} points (${newMultiplier}x multiplier)`;
       
       return {
         ...state,
         state: GAME_STATES.FEEDBACK,
         score: state.score + scoreIncrease,
         streak: newStreak,
+        highestStreak: Math.max(state.highestStreak || 0, newStreak),
         multiplier: newMultiplier,
         totalAttempts: state.totalAttempts + 1,
         showFeedback: true,
         feedbackType: 'correct',
-        feedbackMessage: `Correct! +${scoreIncrease} points (${newMultiplier}x multiplier)`,
+        feedbackMessage,
         isProcessingChord: true
       };
       
@@ -149,9 +155,6 @@ function gameStateReducer(state, action) {
       return {
         ...state,
         state: GAME_STATES.NEXT_CHORD,
-        showFeedback: false,
-        feedbackType: null,
-        feedbackMessage: '',
         completedChords: [...state.completedChords, action.payload.chordId],
         isProcessingChord: false
       };
@@ -184,6 +187,22 @@ function gameStateReducer(state, action) {
       return {
         ...initialState
       };
+
+    case ACTIONS.SET_FEEDBACK:
+      return {
+        ...state,
+        showFeedback: true,
+        feedbackType: action.payload?.feedbackType || null,
+        feedbackMessage: action.payload?.feedbackMessage || ''
+      };
+
+    case ACTIONS.CLEAR_FEEDBACK:
+      return {
+        ...state,
+        showFeedback: false,
+        feedbackType: null,
+        feedbackMessage: ''
+      };
       
     case ACTIONS.SET_PROCESSING:
       return {
@@ -213,9 +232,9 @@ function useGameState() {
   // Helper functions for common actions
   const startGame = () => dispatch({ type: ACTIONS.START_GAME });
   
-  const correctAnswer = (points) => dispatch({
+  const correctAnswer = (points, feedbackMessage) => dispatch({
     type: ACTIONS.CORRECT_ANSWER,
-    payload: { points }
+    payload: { points, feedbackMessage }
   });
   
   const wrongAnswer = () => dispatch({ type: ACTIONS.WRONG_ANSWER });
@@ -238,6 +257,13 @@ function useGameState() {
   });
   
   const resetGame = () => dispatch({ type: ACTIONS.RESET_GAME });
+
+  const setFeedback = (feedbackType, feedbackMessage = '') => dispatch({
+    type: ACTIONS.SET_FEEDBACK,
+    payload: { feedbackType, feedbackMessage }
+  });
+
+  const clearFeedback = () => dispatch({ type: ACTIONS.CLEAR_FEEDBACK });
   
   // Add actions for processing state
   const setProcessing = () => dispatch({ type: ACTIONS.SET_PROCESSING });
@@ -251,6 +277,8 @@ function useGameState() {
     wrongAnswer,
     timeout,
     nextChord,
+    setFeedback,
+    clearFeedback,
     setProcessing,
     clearProcessing,
     nextQuestion,
